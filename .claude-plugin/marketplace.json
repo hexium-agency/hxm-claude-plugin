@@ -1,0 +1,12 @@
+{
+  "name": "hexium-tools",
+  "owner": {
+    "name": "Hexium"
+  },
+  "plugins": [
+    {
+      "name": "hxm",
+      "source": "./"
+    }
+  ]
+}
