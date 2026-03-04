@@ -11,7 +11,7 @@ Add the marketplace (once), then install the plugin:
 /plugin install hxm@hexium-tools
 ```
 
-Updates are applied automatically on Claude Code startup.
+To update manually, run `/plugin update` in Claude Code.
 
 ## Development
 
