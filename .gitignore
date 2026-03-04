@@ -1,0 +1,13 @@
+# Conductor
+.context/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+
+# macOS
+.DS_Store
+
+# Node
+node_modules/
