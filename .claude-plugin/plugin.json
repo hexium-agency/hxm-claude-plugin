@@ -1,10 +1,11 @@
 {
   "name": "hxm",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Hexium dev team toolkit for git workflows, documentation, code review, and ticket planning",
   "author": {
     "name": "Hexium"
   },
   "license": "MIT",
+  "repository": "https://github.com/hexium-agency/hxm-claude-plugin",
   "keywords": ["git", "commit", "documentation", "code-review", "clickup", "workflow"]
 }

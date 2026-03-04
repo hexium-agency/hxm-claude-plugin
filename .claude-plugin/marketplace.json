@@ -6,7 +6,10 @@
   "plugins": [
     {
       "name": "hxm",
-      "source": "./"
+      "source": {
+        "source": "github",
+        "repo": "hexium-agency/hxm-claude-plugin"
+      }
     }
   ]
 }
