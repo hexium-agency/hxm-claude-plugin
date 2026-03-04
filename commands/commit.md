@@ -5,7 +5,7 @@ argument-hint: --all | --files <file1> <file2> ...
 model: haiku
 ---
 
-# /hxm:commit - Smart Git Commit Tool
+# Smart Git Commit Tool
 
 CRITICAL: Follow the Process section exactly - this tool analyzes staged changes, generates conventional commit
 messages, and executes git commits through a strict validation workflow. Do not diverge from the defined process.
