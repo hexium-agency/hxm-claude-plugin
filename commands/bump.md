@@ -1,11 +1,11 @@
 ---
-allowed-tools: Bash(git log:*), Bash(git tag:*), Bash(npm version:*), Bash(cargo set-version:*), Bash(composer config:*), Read, Grep, Bash(git diff:*), Bash(git status:*)
-argument-hint: --major | --minor | --patch | --auto
 description: Smart version bump tool that analyzes commits and suggests appropriate version increment
+argument-hint: --major | --minor | --patch | --auto
+allowed-tools: [Read, Grep, Edit, AskUserQuestion, Bash(git log:*), Bash(git tag:*), Bash(git diff:*), Bash(git status:*), Bash(git add:*), Bash(git commit:*), Bash(npm version:*), Bash(cargo set-version:*), Bash(composer config:*)]
 model: haiku
 ---
 
-# /hxm:bump - Smart version bump tool that analyzes commits and suggests appropriate version increment
+# Smart Version Bump
 
 ## Purpose
 
@@ -102,9 +102,9 @@ Smart version bump tool that analyzes git commit history since the last version 
      Commits analyzed: N
      Proposed message: "A.B.C - [generated message]"
      ```
-   - Ask user for confirmation: "Proceed with version bump? (yes/no)"
-   - If user responds "no" or anything other than "yes": Exit without changes
    - If tag vA.B.C already exists: Exit with error "Tag vA.B.C already exists"
+   - Use `AskUserQuestion` to confirm the bump (options: "Proceed" / "Cancel")
+   - If the user does not confirm: Exit without changes
 
 8. **Version Bump Execution**
 
@@ -120,7 +120,7 @@ Smart version bump tool that analyzes git commit history since the last version 
      - `git commit -m "[new_version] - [generated message]"`
      - `git tag v[new_version] -m "[new_version] - [generated message]"`
    - **Python projects**:
-     - Update version in appropriate file
+     - Edit the version string in the appropriate file (`pyproject.toml`, `setup.py`, or `__init__.py`) using the `Edit` tool
      - `git add [version_file]`
      - `git commit -m "[new_version] - [generated message]"`
      - `git tag v[new_version] -m "[new_version] - [generated message]"`
@@ -173,92 +173,19 @@ The tool follows these rules for analyzing conventional commits:
 
 ## Examples
 
-### Example 1: Auto bump with conventional commits
-
-**Scenario**: Node.js project with several conventional commits since v1.2.3
-
 ```bash
-$ /hxm:bump --auto
+# Auto-detect the bump level from conventional commits since the last tag
+/hxm:bump --auto
+
+# Force a specific level
+/hxm:bump --major
 ```
 
-**Process**:
+**Typical flow** (`/hxm:bump --auto`, Node.js project at v1.2.3): pre-flight checks pass → detect npm project
+→ analyze commits since v1.2.3 (two `feat:`, one `fix:`) → highest level MINOR → new version 1.3.0 → preview
+and confirm → `npm version minor -m "1.3.0 - add user profiles and email notifications"` → tag v1.3.0 created.
 
-1. Pre-flight checks pass (clean working directory)
-2. Detected Node.js project (package.json found)
-3. Current version: 1.2.3
-4. Analyzed commits since v1.2.3:
-   - feat: add user profile page
-   - feat: implement email notifications
-   - fix: resolve login session timeout
-   - docs: update API documentation
-5. Highest bump level: MINOR (due to feat commits)
-6. Calculated new version: 1.3.0
-7. Generated message: "1.3.0 - add user profiles and email notifications"
-8. Preview shown:
-   ```
-   Current version: 1.2.3
-   New version: 1.3.0
-   Bump level: MINOR
-   Commits analyzed: 4
-   Proposed message: "1.3.0 - add user profiles and email notifications"
-   ```
-9. User confirms: yes
-10. Executed: `npm version minor -m "1.3.0 - add user profiles and email notifications"`
-11. Success: Version bumped to 1.3.0, tag v1.3.0 created
+**Common errors:**
 
-### Example 2: Forced major bump
-
-**Scenario**: Rust project requiring breaking changes
-
-```bash
-$ /hxm:bump --major
-```
-
-**Process**:
-
-1. Pre-flight checks pass
-2. Detected Rust project (Cargo.toml found)
-3. Current version: 2.4.1
-4. Commit analysis skipped (forced level)
-5. Calculated new version: 3.0.0
-6. Analyzed commits for message generation:
-   - refactor: redesign API endpoints
-   - feat: add new authentication system
-   - chore: update dependencies
-7. Generated message: "3.0.0 - redesign API with new authentication"
-8. Preview shown and user confirms
-9. Executed cargo commands and created tag v3.0.0
-10. Success message with reminder to push
-
-### Example 3: Error - dirty working directory
-
-**Scenario**: User has uncommitted changes
-
-```bash
-$ /hxm:bump
-```
-
-**Output**:
-
-```
-Error: Working directory not clean. Commit or stash changes first.
-```
-
-**Resolution**: User must commit or stash changes before running bump again
-
-### Example 4: Error - no commits to bump
-
-**Scenario**: Version was just bumped, no new commits
-
-```bash
-$ /hxm:bump
-```
-
-**Output**:
-
-```
-Current version: 1.5.0
-Error: No commits since last version. Nothing to bump.
-```
-
-**Resolution**: Make commits before attempting to bump version
+- Dirty working directory → `Error: Working directory not clean. Commit or stash changes first.`
+- No commits since the last tag → `Error: No commits since last version. Nothing to bump.`
