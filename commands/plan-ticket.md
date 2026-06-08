@@ -1,11 +1,11 @@
 ---
 description: Analyze a ticket and prepare an implementation plan
-allowed-tools: [Read, Glob, Grep, Bash, Task, AskUserQuestion, EnterPlanMode, ExitPlanMode, mcp__clickup__getTaskById, mcp__clickup__searchTasks, mcp__clickup__getListInfo, mcp__clickup__readDocument, WebFetch]
 argument-hint: <ticket> [--feedback] [--context "additional context"]
+allowed-tools: [Read, Glob, Grep, Bash(git branch:*), Bash(git checkout:*), Task, AskUserQuestion, EnterPlanMode, ExitPlanMode, mcp__clickup, WebFetch]
 model: opus
 ---
 
-# /hxm:plan-ticket - Ticket Analysis and Implementation Planning
+# Ticket Analysis and Implementation Planning
 
 Analyzes a ticket from any supported ticket manager (ClickUp by default), retrieves all relevant information, and prepares an implementation plan.
 
@@ -86,13 +86,13 @@ Store the detected type for scope-specific analysis later.
    - Remove `CU-` prefix if present
    - Remove `#` prefix if present
    - Extract ID from URL if full URL provided
-2. Use `mcp__clickup__getTaskById` to retrieve the full ticket with:
-   - Title and description
-   - Status and priority
-   - Comments and discussion history
-   - Attachments metadata
+2. Using the connected ClickUp MCP server, retrieve the full ticket by its ID — title, description, status,
+   priority, and attachment metadata. Pick whichever tool the server exposes for fetching a task by ID. If
+   comments are not included in that response, also call the server's tool for the task's comments and
+   discussion history.
 3. If attachments are referenced, note them for later retrieval
-4. If linked documents exist, use `mcp__clickup__readDocument` to retrieve their content
+4. If linked documents exist, retrieve their content via the server's document capability (this may require
+   first listing the document's pages, then fetching each page)
 
 **CRITICAL:** If the MCP server is unavailable, inform the user that ticket retrieval failed and ask them to provide the ticket details manually.
 

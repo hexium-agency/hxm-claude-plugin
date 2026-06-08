@@ -1,11 +1,11 @@
 ---
 description: Quick code review of staged changes, a specific file, or a diff
-allowed-tools: [Read, Grep, Glob, Bash(git diff:*), Bash(git status:*), Bash(git log:*)]
 argument-hint: [<target>] [--staged] [--base <branch>]
+allowed-tools: [Read, Grep, Glob, Bash(git diff:*), Bash(git status:*), Bash(git log:*)]
 model: sonnet
 ---
 
-# /hxm:review - Quick Code Review
+# Quick Code Review
 
 Performs a focused code review on staged changes, a specific file, or a diff against a base branch. Unlike `/hxm:wrap-up` which provides a full branch report, this command delivers a fast, targeted review.
 

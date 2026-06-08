@@ -1,11 +1,11 @@
 ---
 description: Generate a changelog from conventional commits since the last version tag
-allowed-tools: Bash(git log:*), Bash(git tag:*), Read, Write, Edit
 argument-hint: [--from <tag>] [--to <ref>] [--output <file>]
+allowed-tools: [Read, Write, Edit, Bash(git log:*), Bash(git tag:*)]
 model: haiku
 ---
 
-# /hxm:changelog - Changelog Generator
+# Changelog Generator
 
 Generates a changelog by analyzing conventional commits since the last version tag. Complements `/hxm:bump` by producing human-readable release notes.
 
@@ -44,10 +44,8 @@ Generates a changelog by analyzing conventional commits since the last version t
 ### 1. Determine Range
 
 1. If `--from` is provided, use it as the start point
-2. Otherwise, find the latest version tag:
-   ```bash
-   git tag --sort=-v:refname | head -1
-   ```
+2. Otherwise, find the latest version tag by running `git tag --sort=-v:refname` and taking the first line of
+   the output.
 3. If no tags exist, use the first commit as the start point
 4. Use `--to` as the end point, or HEAD if not specified
 

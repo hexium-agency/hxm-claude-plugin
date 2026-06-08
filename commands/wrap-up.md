@@ -1,11 +1,11 @@
 ---
 description: Review the current branch — retrieves linked ClickUp ticket, analyzes all changes, and provides a comprehensive wrap-up report on the feature, code quality, and maintainability.
-allowed-tools: [Read, Glob, Grep, Bash, Task, mcp__clickup__getTaskById, mcp__clickup__searchTasks, mcp__clickup__getListInfo, mcp__clickup__readDocument]
 argument-hint: [ticket] [--base <branch>]
+allowed-tools: [Read, Glob, Grep, Bash(git log:*), Bash(git diff:*), Bash(git branch:*), Task, mcp__clickup]
 model: opus
 ---
 
-# /hxm:wrap-up - Branch Wrap-Up Review
+# Branch Wrap-Up Review
 
 Reviews the current branch by retrieving the linked ClickUp ticket, analyzing all changes against the base branch, and producing a comprehensive report covering feature completeness, code quality, and maintainability.
 
@@ -57,12 +57,12 @@ Reviews the current branch by retrieving the linked ClickUp ticket, analyzing al
 
 **Skip this step if no ticket ID was found.**
 
-1. Use `mcp__clickup__getTaskById` to retrieve:
-   - Title and description
-   - Status and priority
-   - Acceptance criteria (from description or custom fields)
-   - Comments and discussion history
-2. If linked documents exist, use `mcp__clickup__readDocument` to retrieve content.
+1. Using the connected ClickUp MCP server, retrieve the ticket by its ID — title, description, status,
+   priority, and acceptance criteria (from the description or custom fields). Pick whichever tool the server
+   exposes for fetching a task by ID. If comments are not included, also call the server's tool for the
+   task's comments and discussion history.
+2. If linked documents exist, retrieve their content via the server's document capability (list the
+   document's pages, then fetch each page).
 3. Compile a ticket summary with:
    - What the feature is supposed to do (functional requirements)
    - Any technical constraints mentioned

@@ -1,11 +1,11 @@
 ---
 description: Estimate complexity and effort for a ClickUp ticket
-allowed-tools: [Read, Glob, Grep, Bash(git branch:*), mcp__clickup__getTaskById, mcp__clickup__searchTasks, mcp__clickup__getListInfo, mcp__clickup__readDocument]
 argument-hint: <ticket> [--context "additional context"]
+allowed-tools: [Read, Glob, Grep, Bash(git branch:*), mcp__clickup]
 model: sonnet
 ---
 
-# /hxm:estimate-ticket - Ticket Effort Estimation
+# Ticket Effort Estimation
 
 Analyzes a ClickUp ticket and provides a structured estimation of complexity, effort, risks, and dependencies.
 
@@ -48,20 +48,19 @@ Analyzes a ClickUp ticket and provides a structured estimation of complexity, ef
 
 ### 2. Retrieve Ticket Information
 
-1. Use `mcp__clickup__getTaskById` to retrieve:
-   - Title and description
-   - Status and priority
-   - Tags and custom fields
-   - Comments and discussion history
-   - Subtasks (if any)
-2. If linked documents exist, use `mcp__clickup__readDocument` to retrieve their content
-3. Use `mcp__clickup__getListInfo` to understand the project context
+1. Using the connected ClickUp MCP server, retrieve the ticket by its ID — title, description, status,
+   priority, tags, custom fields, and subtasks. Pick whichever tool the server exposes for fetching a task by
+   ID. If comments are not included, also call the server's tool for the task's comments and discussion
+   history.
+2. If linked documents exist, retrieve their content via the server's document capability (list the
+   document's pages, then fetch each page)
+3. Use the server's list-info capability to understand the project context
 
 **If the MCP server is unavailable:** Inform the user that ticket retrieval failed and ask them to provide the ticket details manually, then continue the estimation with the provided information.
 
 ### 3. Gather Related Context
 
-1. Use `mcp__clickup__searchTasks` to find similar completed tasks in the same list or project. Look for tasks with similar tags or keywords from the title. Limit to 5-10 results.
+1. Use the server's search capability to find similar completed tasks in the same list or project. Look for tasks with similar tags or keywords from the title. Limit to 5-10 results.
 2. Note any comparable past tasks and their apparent scope (based on description length, subtask count, and comments volume) to calibrate the estimate.
 
 ### 4. Lightweight Codebase Assessment

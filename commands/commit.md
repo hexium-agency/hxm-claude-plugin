@@ -1,7 +1,7 @@
 ---
 description: Smart git commit tool. Handles staging, generates conventional commit messages, executes git commits.
-allowed-tools: Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git commit:*)
 argument-hint: --all | --files <file1> <file2> ...
+allowed-tools: [Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git commit:*)]
 model: haiku
 ---
 
@@ -23,6 +23,11 @@ messages, and executes git commits through a strict validation workflow. Do not 
 - `--files <file1> <file2> ...`: Stage only the specified files before analyzing
 
 ## Process
+
+**CRITICAL: This command MUST NOT execute in plan mode.** If you are in plan mode (indicated by system
+reminders or restrictions on tool usage), output the following and stop: "Error: This command cannot run in
+plan mode. Please exit plan mode first to execute git operations." Only proceed with the steps below if you
+are NOT in plan mode.
 
 ### 1. Parse and Validate Arguments
 
