@@ -1,11 +1,11 @@
 ---
 description: Smart atomic commit tool. Analyzes all changes, groups them logically, and creates atomic commits.
-allowed-tools: Task, Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git commit:*), Bash(git reset HEAD:*), AskUserQuestion
 argument-hint: [--dry-run]
+allowed-tools: [Task, AskUserQuestion, Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git commit:*), Bash(git reset HEAD:*)]
 model: sonnet
 ---
 
-# /hxm:commit-atomic - Smart Atomic Commit Tool
+# Smart Atomic Commit Tool
 
 CRITICAL: Follow the Process section exactly - this tool analyzes ALL changes (staged and unstaged), groups them
 logically, and creates multiple atomic commits. Each commit follows conventional commit standards.
@@ -22,6 +22,11 @@ logically, and creates multiple atomic commits. Each commit follows conventional
 - `--dry-run`: Show proposed commit groups without executing commits
 
 ## Process
+
+**CRITICAL: This command MUST NOT execute in plan mode.** If you are in plan mode (indicated by system
+reminders or restrictions on tool usage), output the following and stop: "Error: This command cannot run in
+plan mode. Please exit plan mode first to execute git operations." Only proceed with the steps below if you
+are NOT in plan mode.
 
 ### 1. Gather All Changes
 
