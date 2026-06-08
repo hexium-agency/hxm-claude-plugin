@@ -29,14 +29,12 @@ claude --plugin-dir ./hxm-claude-plugin
 └── plugin.json        # Plugin manifest
 commands/              # Slash commands (/hxm:<command>)
 agents/                # Autonomous subagents
-skills/                # Auto-activated knowledge modules
-hooks/                 # Event-driven automation
 ```
 
 ## Prerequisites
 
 - [Claude Code](https://code.claude.com) CLI
-- [ClickUp MCP server](https://github.com/anthropics/claude-code-plugins) (for ticket-related commands)
+- A ClickUp MCP server (for ticket-related commands: `/hxm:plan-ticket`, `/hxm:estimate-ticket`, `/hxm:spec-ticket`, `/hxm:wrap-up`)
 
 ## Contributing
 
