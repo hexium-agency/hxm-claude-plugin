@@ -1,11 +1,11 @@
 ---
-allowed-tools: [Read, Write, Glob, Grep, Bash, Edit]
-argument-hint: <target> [--type inline|centralized] [--level brief|detailed]
 description: Generate comprehensive documentation for code, features, and system architecture
+argument-hint: <target> [--type inline|centralized] [--level brief|detailed]
+allowed-tools: [Read, Write, Edit, Glob, Grep]
 model: sonnet
 ---
 
-# /hxm:document - Intelligent Documentation Generator
+# Documentation Generator
 
 ## Purpose
 
