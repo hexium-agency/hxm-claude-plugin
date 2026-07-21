@@ -34,7 +34,7 @@ agents/                # Autonomous subagents
 ## Prerequisites
 
 - [Claude Code](https://code.claude.com) CLI
-- A ClickUp MCP server (for ticket-related commands: `/hxm:plan-ticket`, `/hxm:estimate-ticket`, `/hxm:spec-ticket`, `/hxm:wrap-up`)
+- A ClickUp MCP server (for ticket-related commands: `/hxm:plan-ticket`, `/hxm:estimate-ticket`, `/hxm:spec-ticket`, `/hxm:wrap-up`, `/hxm:handle-feedback`)
 
 ## Contributing
 
