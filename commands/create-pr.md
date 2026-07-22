@@ -37,9 +37,11 @@ Creates a pull request for the current branch using `gh`, with a ticket-based ti
 
 ### 3. Build the Title
 
-- If the branch name references a ticket (`DONE-XXX` or `CU-xxxxx` pattern, case-insensitive), the title MUST be:
-  - `DONE-XXX: {short description}` — same format for `CU-xxxxx` tickets.
-- Otherwise, use a short conventional title (`type(scope): description`) derived from the branch's commits.
+- Look for a ticket reference in the branch name (case-insensitive); if none is found there, look in the commit messages of `git log <base>..HEAD`:
+  - A prefixed ID (`<PREFIX>-<id>`, letters followed by a dash and an alphanumeric ID) — use it as-is, with the prefix uppercased and the ID's original casing preserved.
+  - A bare token matching the ID shape of the project's ticket tracker (alphanumeric starting with a digit) — apply that tracker's prefix convention. Ordinary words in the branch name are never ticket IDs.
+  - In all cases the title MUST be `{TICKET-ID}: {short description}`.
+- If there is no ticket reference in the branch name or the commits, use a short conventional title (`type(scope): description`) derived from the branch's commits.
 - The short description summarizes the branch's purpose, based on `git log <base>..HEAD`.
 
 ### 4. Determine the Label
@@ -77,4 +79,4 @@ EOF
 
 - This command never pushes or creates the PR without the branch being confirmed as pushed first (step 2).
 - If a PR already exists for the branch (`gh pr view`), report its URL instead of creating a duplicate.
-- Title ticket references come from the branch name first; if absent there, look for them in the commit messages.
+- Ticket detection is tracker-agnostic: any `<PREFIX>-<id>` reference is used verbatim, so the command works unchanged whatever ticket tracker the project uses.
