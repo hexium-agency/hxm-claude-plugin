@@ -1,6 +1,6 @@
 {
   "name": "hxm",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Hexium dev team toolkit for git workflows, documentation, code review, and ticket planning",
   "author": {
     "name": "Hexium"

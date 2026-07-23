@@ -1,5 +1,5 @@
 ---
-description: Create a pull request for the current branch via gh — ticket-based title, detected base branch, repo PR template filled in French
+description: Create a pull request for the current branch via gh — English ticket-based title, detected base branch, repo PR template filled in French
 argument-hint: [--base <branch>]
 allowed-tools: [Read, Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git branch:*), Bash(git merge-base:*), Bash(git reflog:*), Bash(git push:*), Bash(gh pr create:*), Bash(gh pr view:*), Bash(gh label list:*)]
 model: sonnet
@@ -7,7 +7,7 @@ model: sonnet
 
 # Create Pull Request
 
-Creates a pull request for the current branch using `gh`, with a ticket-based title, the real parent branch as base, the author as assignee, an `enhancement` or `bug` label, and the repository's PR template filled in French.
+Creates a pull request for the current branch using `gh`, with a ticket-based title in English, the real parent branch as base, the author as assignee, an `enhancement` or `bug` label, and the repository's PR template filled in French.
 
 ## Usage
 
@@ -37,6 +37,7 @@ Creates a pull request for the current branch using `gh`, with a ticket-based ti
 
 ### 3. Build the Title
 
+- The title MUST be written **in English** by default, whatever the language of the ticket, the commits, or the conversation. Only use another language if the user explicitly asks for it.
 - Look for a ticket reference in the branch name (case-insensitive); if none is found there, look in the commit messages of `git log <base>..HEAD`:
   - A prefixed ID (`<PREFIX>-<id>`, letters followed by a dash and an alphanumeric ID) — use it as-is, with the prefix uppercased and the ID's original casing preserved.
   - A bare token matching the ID shape of the project's ticket tracker (alphanumeric starting with a digit) — apply that tracker's prefix convention. Ordinary words in the branch name are never ticket IDs.
