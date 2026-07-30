@@ -1,18 +1,18 @@
 ---
-description: Create a pull request for the current branch via gh — English ticket-based title, detected base branch, repo PR template filled in French
-argument-hint: [--base <branch>]
+description: Create a pull request for the current branch via gh — English ticket-based title and body, detected base branch, repo PR template filled in
+argument-hint: [--base <branch>] [instructions]
 allowed-tools: [Read, Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git branch:*), Bash(git merge-base:*), Bash(git reflog:*), Bash(git push:*), Bash(gh pr create:*), Bash(gh pr view:*), Bash(gh label list:*)]
 model: sonnet
 ---
 
 # Create Pull Request
 
-Creates a pull request for the current branch using `gh`, with a ticket-based title in English, the real parent branch as base, the author as assignee, an `enhancement` or `bug` label, and the repository's PR template filled in French.
+Creates a pull request for the current branch using `gh`, entirely in English by default — ticket-based title, the real parent branch as base, the author as assignee, an `enhancement` or `bug` label, and the repository's PR template filled in. Free-form instructions can refine the title, the body, or the output language.
 
 ## Usage
 
 ```bash
-/hxm:create-pr [--base <branch>]
+/hxm:create-pr [--base <branch>] [instructions]
 ```
 
 ## Arguments
@@ -20,6 +20,28 @@ Creates a pull request for the current branch using `gh`, with a ticket-based ti
 | Argument | Type | Description |
 |----------|------|-------------|
 | `--base` | string | Optional. Base branch for the PR. If omitted, the real parent branch is detected. |
+| `instructions` | string | Optional. Free-form precisions applied to the PR: output language, wording of the title, extra context or emphasis for the body. |
+
+## Examples
+
+```bash
+# Default: everything in English, base auto-detected
+/hxm:create-pr
+
+# Explicit base branch
+/hxm:create-pr --base develop
+
+# Override the default language
+/hxm:create-pr write the body in French
+
+# Add context to the body
+/hxm:create-pr mention that the migration must run before deploy
+```
+
+## Language
+
+- Everything the command writes — title, body, template sections — is **in English** by default, whatever the language of the ticket, the commits, or the conversation.
+- Only deviate if the `instructions` argument explicitly asks for another language; in that case apply it to whichever parts the user names (all of it, unless they say otherwise).
 
 ## Process
 
@@ -37,7 +59,7 @@ Creates a pull request for the current branch using `gh`, with a ticket-based ti
 
 ### 3. Build the Title
 
-- The title MUST be written **in English** by default, whatever the language of the ticket, the commits, or the conversation. Only use another language if the user explicitly asks for it.
+- The title follows the language rule above: **English** unless the `instructions` argument says otherwise.
 - Look for a ticket reference in the branch name (case-insensitive); if none is found there, look in the commit messages of `git log <base>..HEAD`:
   - A prefixed ID (`<PREFIX>-<id>`, letters followed by a dash and an alphanumeric ID) — use it as-is, with the prefix uppercased and the ID's original casing preserved.
   - A bare token matching the ID shape of the project's ticket tracker (alphanumeric starting with a digit) — apply that tracker's prefix convention. Ordinary words in the branch name are never ticket IDs.
@@ -55,8 +77,9 @@ Creates a pull request for the current branch using `gh`, with a ticket-based ti
 ### 5. Build the Body
 
 - If `.github/PULL_REQUEST_TEMPLATE.md` exists, use it as the structure and fill in every section — leave none empty.
-- The description and tests sections MUST be written **in French**.
-- If no template exists, write a short body with a description section and a tests section, both in French.
+- If no template exists, write a short body with a description section and a tests section.
+- The body follows the language rule above: **English** unless the `instructions` argument says otherwise. Keep the template's own headings as they are written in the repo.
+- Fold any content precisions from the `instructions` argument into the relevant sections.
 
 ### 6. Create the PR
 
