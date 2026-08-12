@@ -1,7 +1,7 @@
 ---
 description: Smart version bump tool that analyzes commits and suggests appropriate version increment
 argument-hint: --major | --minor | --patch | --auto
-allowed-tools: [Read, Grep, Edit, AskUserQuestion, Bash(git log:*), Bash(git tag:*), Bash(git diff:*), Bash(git status:*), Bash(git add:*), Bash(git commit:*), Bash(npm version:*), Bash(cargo set-version:*), Bash(composer config:*)]
+allowed-tools: [Read, Grep, Edit, AskUserQuestion, Bash(git log:*), Bash(git tag:*), Bash(git diff:*), Bash(git status:*), Bash(git add:*), Bash(git commit:*), Bash(npm version:*), Bash(cargo set-version:*), Bash(composer config:*), Bash(./scripts/check-version-consistency.sh:*)]
 model: haiku
 ---
 
@@ -9,7 +9,7 @@ model: haiku
 
 ## Purpose
 
-Smart version bump tool that analyzes git commit history since the last version to automatically determine whether a major, minor, or patch version increment is appropriate. The tool detects the project type (Node.js, Rust, Python, etc.) and uses the appropriate versioning command with intelligent commit message generation.
+Smart version bump tool that analyzes git commit history since the last version to automatically determine whether a major, minor, or patch version increment is appropriate. The tool detects the project type (Claude Code plugin, Node.js, Rust, Python, etc.) and uses the appropriate versioning command with intelligent commit message generation.
 
 ## Usage
 
@@ -42,6 +42,9 @@ Smart version bump tool that analyzes git commit history since the last version 
 
 2. **Project Detection**
 
+   - Check for `.claude-plugin/plugin.json` (Claude Code plugin) — **check this first**: a plugin
+     repository may also carry a `package.json` for tooling, and the plugin manifest is what Claude Code
+     actually reads
    - Check for `package.json` (Node.js/npm project)
    - Check for `Cargo.toml` (Rust project)
    - Check for `pyproject.toml` or `setup.py` (Python project)
@@ -50,6 +53,7 @@ Smart version bump tool that analyzes git commit history since the last version 
 
 3. **Current Version Detection**
 
+   - For Claude Code plugins: Extract version from `.claude-plugin/plugin.json`
    - For npm: Extract version from `package.json`
    - For Rust: Extract version from `Cargo.toml`
    - For Python: Extract version with priority order:
@@ -58,6 +62,12 @@ Smart version bump tool that analyzes git commit history since the last version 
      3. `__init__.py` - Look for `__version__` variable
    - For others: Use latest git tag matching semver pattern (vX.Y.Z or X.Y.Z)
    - If no version found: Start with 0.0.0
+
+   **Tag convention detection** — run `git tag --list --sort=-v:refname | head -n 1` and reuse the
+   existing prefix: if the latest tag looks like `vX.Y.Z`, tag `v[new_version]`; if it looks like
+   `X.Y.Z`, tag `[new_version]` with no prefix. Only default to the `v` prefix when the repository has
+   no tags yet. Mixing both conventions in one repository breaks tag-based version lookups.
+   Below, `[tag]` means the new version rendered with the detected prefix.
 
 4. **Commit Analysis** (only if --auto or no arguments provided)
 
@@ -102,38 +112,64 @@ Smart version bump tool that analyzes git commit history since the last version 
      Commits analyzed: N
      Proposed message: "A.B.C - [generated message]"
      ```
-   - If tag vA.B.C already exists: Exit with error "Tag vA.B.C already exists"
+   - If the tag for A.B.C already exists: Exit with error "Tag [tag] already exists"
    - Use `AskUserQuestion` to confirm the bump (options: "Proceed" / "Cancel")
    - If the user does not confirm: Exit without changes
 
 8. **Version Bump Execution**
 
+   - **Claude Code plugins**:
+     - Edit the `version` field in `.claude-plugin/plugin.json` using the `Edit` tool
+     - If `.claude-plugin/marketplace.json` exists, look up the entry in `plugins[]` whose `name`
+       matches the plugin, then:
+       - If that entry declares a `version`, update it to `[new_version]` so both manifests agree
+       - If it does not, **leave it alone** — do not add one. Claude Code resolves the version from
+         `plugin.json` first and silently ignores the marketplace value, so a duplicated version only
+         creates drift (see Notes below)
+     - `git add .claude-plugin/plugin.json` (add `.claude-plugin/marketplace.json` only if it changed)
+     - `git commit -m "[new_version] - [generated message]"`
+     - `git tag [tag] -m "[new_version] - [generated message]"`
    - **Node.js projects**: `npm version [level] -m "%s - [generated message]"`
    - **Rust projects**:
      - `cargo set-version [new_version]`
      - `git add Cargo.toml Cargo.lock`
      - `git commit -m "[new_version] - [generated message]"`
-     - `git tag v[new_version] -m "[new_version] - [generated message]"`
+     - `git tag [tag] -m "[new_version] - [generated message]"`
    - **PHP projects**:
      - `composer config version [new_version]`
      - `git add composer.json`
      - `git commit -m "[new_version] - [generated message]"`
-     - `git tag v[new_version] -m "[new_version] - [generated message]"`
+     - `git tag [tag] -m "[new_version] - [generated message]"`
    - **Python projects**:
      - Edit the version string in the appropriate file (`pyproject.toml`, `setup.py`, or `__init__.py`) using the `Edit` tool
      - `git add [version_file]`
      - `git commit -m "[new_version] - [generated message]"`
-     - `git tag v[new_version] -m "[new_version] - [generated message]"`
+     - `git tag [tag] -m "[new_version] - [generated message]"`
    - **Other projects**:
-     - `git tag v[new_version] -m "[new_version] - [generated message]"`
+     - `git tag [tag] -m "[new_version] - [generated message]"`
 
 9. **Confirmation**
+   - If `scripts/check-version-consistency.sh` exists, run it to verify the manifests and the new tag agree
    - Display success message with new version number
    - Show the commit/tag that was created
    - Remind user to push: `git push && git push --tags`
    - If any step fails, display clear error message and exit
 
 ## Notes
+
+### Claude Code Plugin Versioning
+
+Claude Code resolves a plugin's version from the first source that is set: the `version` in
+`.claude-plugin/plugin.json`, then the `version` in the marketplace entry, then the git commit SHA of
+the plugin source. Because `plugin.json` always wins, declaring a version in both manifests lets a
+stale entry mask the other one without any warning. Keep `plugin.json` as the single declared version
+and let the marketplace entry omit it.
+
+That leaves two things to keep in sync — `plugin.json` and the git tag — which is what
+`scripts/check-version-consistency.sh` enforces.
+
+Bumping the version is also what ships the update: users only receive a new version when the string in
+`plugin.json` changes, so a release without a bump is invisible to `/plugin update`.
 
 ### Commit Message Classification Rules
 
@@ -184,6 +220,12 @@ The tool follows these rules for analyzing conventional commits:
 **Typical flow** (`/hxm:bump --auto`, Node.js project at v1.2.3): pre-flight checks pass → detect npm project
 → analyze commits since v1.2.3 (two `feat:`, one `fix:`) → highest level MINOR → new version 1.3.0 → preview
 and confirm → `npm version minor -m "1.3.0 - add user profiles and email notifications"` → tag v1.3.0 created.
+
+**Claude Code plugin flow** (`/hxm:bump --auto`, plugin at 0.4.2, tags without a `v` prefix): detect
+`.claude-plugin/plugin.json` → current version 0.4.2 → latest tag `0.4.2` so the convention is unprefixed
+→ analyze commits (one `fix:`) → PATCH → new version 0.4.3 → edit `plugin.json`, leave the marketplace
+entry untouched since it declares no version → commit → `git tag 0.4.3` → run
+`scripts/check-version-consistency.sh`.
 
 **Common errors:**
 

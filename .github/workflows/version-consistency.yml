@@ -1,0 +1,19 @@
+name: Version consistency
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    name: Check plugin version consistency
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository with its tags
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify plugin.json, marketplace entry and git tag agree
+        run: ./scripts/check-version-consistency.sh

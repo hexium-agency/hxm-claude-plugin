@@ -26,9 +26,24 @@ claude --plugin-dir ./hxm-claude-plugin
 
 ```
 .claude-plugin/
-└── plugin.json        # Plugin manifest
+├── plugin.json        # Plugin manifest (single source of truth for the version)
+└── marketplace.json   # hexium-tools marketplace catalog
 commands/              # Slash commands (/hxm:<command>)
 agents/                # Autonomous subagents
+scripts/               # Repository maintenance scripts
+```
+
+## Releasing
+
+Run `/hxm:bump` to bump `.claude-plugin/plugin.json` and create the matching git tag, then
+`git push && git push --tags`. Users only receive an update when that version string changes.
+
+The version is declared in `plugin.json` only — the marketplace entry deliberately omits it, since
+Claude Code reads `plugin.json` first and would silently ignore a marketplace value. CI enforces that
+`plugin.json` and the latest git tag agree; run the same check locally with:
+
+```bash
+./scripts/check-version-consistency.sh
 ```
 
 ## Prerequisites
