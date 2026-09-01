@@ -1,0 +1,36 @@
+{
+  "author": {
+    "name": "Hexium"
+  },
+  "description": "Hexium dev team toolkit for git workflows, documentation, code review, and ticket planning",
+  "homepage": "https://github.com/hexium-agency/hxm-claude-plugin",
+  "interface": {
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "category": "Developer Tools",
+    "defaultPrompt": [
+      "Commit my staged changes",
+      "Rebase this branch onto its base",
+      "Plan this ClickUp ticket"
+    ],
+    "developerName": "Hexium",
+    "displayName": "Hexium Toolkit",
+    "longDescription": "Shared Hexium dev workflows: conventional commits, atomic commits, version bumps, changelogs, pull requests, rebases, code review, documentation, and ClickUp ticket planning, specification and estimation.",
+    "shortDescription": "Git workflows, code review and ticket planning for the Hexium team"
+  },
+  "keywords": [
+    "git",
+    "commit",
+    "documentation",
+    "code-review",
+    "clickup",
+    "workflow"
+  ],
+  "license": "MIT",
+  "name": "hxm",
+  "repository": "https://github.com/hexium-agency/hxm-claude-plugin",
+  "skills": "./skills/",
+  "version": "0.5.0"
+}

@@ -1,8 +1,9 @@
 ---
+name: commit
 description: Smart git commit tool. Handles staging, generates conventional commit messages, executes git commits.
-argument-hint: --all | --files <file1> <file2> ...
-allowed-tools: [Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git commit:*)]
-model: haiku
+arguments: --all | --files <file1> <file2> ...
+trigger: Use when the user asks to commit staged or pending changes. Stages only what the arguments allow, generates a conventional commit message and commits after explicit confirmation.
+requires: none
 ---
 
 # Smart Git Commit Tool
@@ -13,7 +14,7 @@ messages, and executes git commits through a strict validation workflow. Do not 
 ## Usage
 
 ```bash
-/hxm:commit [--all] [--files <file1> <file2> ...]
+{{command:commit}} [--all] [--files <file1> <file2> ...]
 ```
 
 ## Arguments
@@ -24,11 +25,13 @@ messages, and executes git commits through a strict validation workflow. Do not 
 
 ## Process
 
+<!-- provider:claude -->
 **CRITICAL: This command MUST NOT execute in plan mode.** If you are in plan mode (indicated by system
 reminders or restrictions on tool usage), output the following and stop: "Error: This command cannot run in
 plan mode. Please exit plan mode first to execute git operations." Only proceed with the steps below if you
 are NOT in plan mode.
 
+<!-- /provider -->
 ### 1. Parse and Validate Arguments
 
 **CRITICAL: This command handles staging based ONLY on provided arguments. Do NOT analyze context to decide what to

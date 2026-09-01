@@ -1,0 +1,17 @@
+{
+  "accessibility-expert": {
+    "tools": "Read, Browser"
+  },
+  "code-review-expert": {
+    "tools": "Read, Grep"
+  },
+  "context7-expert": {
+    "tools": "context7:resolve-library-id, context7:get-library-docs, Read"
+  },
+  "performance-expert": {
+    "tools": "Read, Grep, WebFetch"
+  },
+  "security-expert": {
+    "tools": "Read, Grep, WebFetch"
+  }
+}

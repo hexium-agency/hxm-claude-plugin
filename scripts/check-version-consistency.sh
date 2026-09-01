@@ -2,7 +2,9 @@
 #
 # Verifies that the plugin version is identical across every source of truth:
 #
-#   .claude-plugin/plugin.json  ==  marketplace entry version (only if declared)  ==  latest git tag
+#   .claude-plugin/plugin.json  ==  marketplace entry version (only if declared)
+#                              ==  codex/.codex-plugin/plugin.json (only if present)
+#                              ==  latest git tag
 #
 # The marketplace entry is expected NOT to declare a version: Claude Code resolves
 # the version from plugin.json first and silently ignores the marketplace value, so
@@ -49,6 +51,18 @@ if [ -f "$marketplace_manifest" ]; then
   fi
 fi
 
+codex_manifest="$repo_root/codex/.codex-plugin/plugin.json"
+
+if [ -f "$codex_manifest" ]; then
+  codex_version="$(jq -r '.version // empty' "$codex_manifest")"
+
+  [ -n "$codex_version" ] || fail "codex/.codex-plugin/plugin.json declares no \"version\"."
+
+  if [ "$codex_version" != "$plugin_version" ]; then
+    fail "Version mismatch: plugin.json is $plugin_version but the Codex manifest is $codex_version. Run ./scripts/generate-distributions.sh."
+  fi
+fi
+
 git rev-parse --git-dir >/dev/null 2>&1 || fail "Not a git repository — cannot compare against the latest tag."
 
 latest_tag="$(git tag --list --sort=-v:refname | head -n 1)"
@@ -63,6 +77,9 @@ fi
 checked="plugin.json"
 if [ -n "${marketplace_version:-}" ]; then
   checked="$checked, the marketplace entry"
+fi
+if [ -n "${codex_version:-}" ]; then
+  checked="$checked, the Codex manifest"
 fi
 
 printf '✓ Version %s is consistent across %s and the git tag %s.\n' "$plugin_version" "$checked" "$latest_tag"
