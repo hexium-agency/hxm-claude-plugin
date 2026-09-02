@@ -1,8 +1,9 @@
 ---
+name: bump
 description: Smart version bump tool that analyzes commits and suggests appropriate version increment
-argument-hint: --major | --minor | --patch | --auto
-allowed-tools: [Read, Grep, Edit, AskUserQuestion, Bash(git log:*), Bash(git tag:*), Bash(git diff:*), Bash(git status:*), Bash(git add:*), Bash(git commit:*), Bash(npm version:*), Bash(cargo set-version:*), Bash(composer config:*), Bash(./scripts/generate-distributions.sh:*), Bash(./scripts/check-version-consistency.sh:*)]
-model: haiku
+arguments: --major | --minor | --patch | --auto
+trigger: Use when the user asks to bump, release or tag a new version of the current project. Analyses conventional commits since the last tag, proposes a major, minor or patch increment, updates the project manifest and creates the matching git tag once the user has confirmed.
+requires: none
 ---
 
 # Smart Version Bump
@@ -27,12 +28,14 @@ Smart version bump tool that analyzes git commit history since the last version 
 
 ## Process
 
+<!-- provider:claude -->
 **CRITICAL: This command MUST NOT execute in plan mode. If you are in plan mode (indicated by system reminders or restrictions on tool usage), immediately output the following error message and stop execution:**
 
 "Error: This command cannot run in plan mode. Please exit plan mode first to execute version operations."
 
 **Only proceed with the following steps if you are NOT in plan mode:**
 
+<!-- /provider -->
 1. **Pre-flight Checks**
 
    - Verify working directory is clean: `git status --porcelain`
@@ -113,7 +116,12 @@ Smart version bump tool that analyzes git commit history since the last version 
      Proposed message: "A.B.C - [generated message]"
      ```
    - If the tag for A.B.C already exists: Exit with error "Tag [tag] already exists"
+   <!-- provider:claude -->
    - Use `AskUserQuestion` to confirm the bump (options: "Proceed" / "Cancel")
+   <!-- /provider -->
+   <!-- provider:codex -->
+   - Ask the user to confirm the bump in plain text (Proceed / Cancel) and wait for the answer
+   <!-- /provider -->
    - If the user does not confirm: Exit without changes
 
 8. **Version Bump Execution**
@@ -214,17 +222,17 @@ The tool follows these rules for analyzing conventional commits:
 
 ```bash
 # Auto-detect the bump level from conventional commits since the last tag
-/hxm:bump --auto
+{{command:bump}} --auto
 
 # Force a specific level
-/hxm:bump --major
+{{command:bump}} --major
 ```
 
-**Typical flow** (`/hxm:bump --auto`, Node.js project at v1.2.3): pre-flight checks pass → detect npm project
+**Typical flow** (`{{command:bump}} --auto`, Node.js project at v1.2.3): pre-flight checks pass → detect npm project
 → analyze commits since v1.2.3 (two `feat:`, one `fix:`) → highest level MINOR → new version 1.3.0 → preview
 and confirm → `npm version minor -m "1.3.0 - add user profiles and email notifications"` → tag v1.3.0 created.
 
-**Claude Code plugin flow** (`/hxm:bump --auto`, plugin at 0.4.2, tags without a `v` prefix): detect
+**Claude Code plugin flow** (`{{command:bump}} --auto`, plugin at 0.4.2, tags without a `v` prefix): detect
 `.claude-plugin/plugin.json` → current version 0.4.2 → latest tag `0.4.2` so the convention is unprefixed
 → analyze commits (one `fix:`) → PATCH → new version 0.4.3 → edit `plugin.json`, leave the marketplace
 entry untouched since it declares no version → commit → `git tag 0.4.3` → run

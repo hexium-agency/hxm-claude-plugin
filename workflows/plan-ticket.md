@@ -1,8 +1,9 @@
 ---
+name: plan-ticket
 description: Analyze a ticket and prepare an implementation plan
-argument-hint: <ticket> [--feedback] [--context "additional context"]
-allowed-tools: [Read, Glob, Grep, Bash(git branch:*), Bash(git checkout:*), Task, AskUserQuestion, EnterPlanMode, ExitPlanMode, mcp__clickup, WebFetch]
-model: opus
+arguments: <ticket> [--feedback] [--context "additional context"]
+trigger: Use when the user asks to plan, prepare or scope a ticket before implementing it. Reads the ticket, explores the codebase, resolves ambiguities with the user and produces a step-by-step implementation plan.
+requires: clickup
 ---
 
 # Ticket Analysis and Implementation Planning
@@ -12,7 +13,7 @@ Analyzes a ticket from any supported ticket manager (ClickUp by default), retrie
 ## Usage
 
 ```
-/hxm:plan-ticket <ticket> [--feedback] [--context "additional context"]
+{{command:plan-ticket}} <ticket> [--feedback] [--context "additional context"]
 ```
 
 ## Arguments
@@ -27,24 +28,32 @@ Analyzes a ticket from any supported ticket manager (ClickUp by default), retrie
 
 ```bash
 # Analyze a ClickUp ticket by ID
-/hxm:plan-ticket abc123
+{{command:plan-ticket}} abc123
 
 # Analyze a ticket that has client feedback to address
-/hxm:plan-ticket abc123 --feedback
+{{command:plan-ticket}} abc123 --feedback
 
 # Analyze with additional context
-/hxm:plan-ticket abc123 --context "This is related to the payment module refactoring"
+{{command:plan-ticket}} abc123 --context "This is related to the payment module refactoring"
 
 # Analyze from full URL with feedback mode
-/hxm:plan-ticket https://app.clickup.com/t/abc123 --feedback --context "Focus on performance issues mentioned"
+{{command:plan-ticket}} https://app.clickup.com/t/abc123 --feedback --context "Focus on performance issues mentioned"
 ```
 
 ## Process
 
+<!-- provider:claude -->
 ### 1. Enter Plan Mode
 
 **CRITICAL:** If not already in plan mode, immediately use `EnterPlanMode` to transition. All subsequent work happens within plan mode.
 
+<!-- /provider -->
+<!-- provider:codex -->
+### 1. Enter Planning Mode
+
+**CRITICAL:** Treat this entire workflow as read-only planning. Do not modify a file, run a write command, or start implementing until the plan has been explicitly approved by the user. The only writes allowed are the branch operations of step 5, and only once the user has confirmed them.
+
+<!-- /provider -->
 ### 2. Parse Arguments
 
 1. Extract the ticket identifier from the first positional argument
@@ -112,7 +121,12 @@ Store the detected type for scope-specific analysis later.
      - Example: `feat/CU-abc123-add-user-export-csv` instead of `feat/CU-abc123-export-problem`
 
 4. **If on `main`, `master`, or `develop`:**
+   <!-- provider:claude -->
    - Use `AskUserQuestion` to ask about branch creation:
+   <!-- /provider -->
+   <!-- provider:codex -->
+   - Ask the user about branch creation and wait for the answer:
+   <!-- /provider -->
      - Option to create the suggested branch name
      - Option to enter a custom branch name
      - Option to stay on current branch (not recommended)
@@ -121,14 +135,24 @@ Store the detected type for scope-specific analysis later.
 5. **If on another branch**, extract any ticket ID from the branch name (e.g., `CU-abc123` pattern):
 
    - **If branch contains a different ticket ID than the one being analyzed:**
+     <!-- provider:claude -->
      - Use `AskUserQuestion` to ask the user for context:
+     <!-- /provider -->
+     <!-- provider:codex -->
+     - Ask the user for context and wait for the answer:
+     <!-- /provider -->
        - Are we working on multiple tickets in this branch?
        - Is this a mistake and should we switch branches?
        - Should we continue anyway?
      - **Execute immediately** if user wants to switch branches
 
    - **If branch does not follow the convention or contains the same/no ticket ID:**
+     <!-- provider:claude -->
      - Use `AskUserQuestion` to ask about renaming:
+     <!-- /provider -->
+     <!-- provider:codex -->
+     - Ask the user about renaming and wait for the answer:
+     <!-- /provider -->
        - Option to rename to the suggested name
        - Option to keep current branch name
        - Option to enter a custom branch name
@@ -176,7 +200,12 @@ Based on the auto-detected repository type:
 
 ### 8. Explore Codebase
 
+<!-- provider:claude -->
 1. Use the Task tool with `subagent_type=Explore` to:
+<!-- /provider -->
+<!-- provider:codex -->
+1. Explore the codebase yourself (targeted greps and reads) to:
+<!-- /provider -->
    - Find existing patterns related to the ticket requirements
    - Identify files and modules that will need modifications
    - Understand current architecture for the affected area
@@ -190,7 +219,12 @@ Based on the auto-detected repository type:
 
 If ambiguities or missing information were identified:
 
+<!-- provider:claude -->
 1. Use `AskUserQuestion` to gather clarification
+<!-- /provider -->
+<!-- provider:codex -->
+1. Ask the user directly to gather clarification
+<!-- /provider -->
 2. Questions should be specific and actionable
 3. Provide context for why the question is important
 4. Offer reasonable default options when possible
@@ -217,7 +251,12 @@ Create a comprehensive implementation plan that includes:
 ### 11. Propose Plan
 
 1. Write the implementation plan to the plan file
+<!-- provider:claude -->
 2. Use `ExitPlanMode` to present the plan for user approval
+<!-- /provider -->
+<!-- provider:codex -->
+2. Present the plan to the user and wait for explicit approval before any implementation
+<!-- /provider -->
 
 ## Output
 

@@ -1,0 +1,20 @@
+{
+  "name": "hexium-tools",
+  "interface": {
+    "displayName": "Hexium Tools"
+  },
+  "plugins": [
+    {
+      "name": "hxm",
+      "source": {
+        "source": "local",
+        "path": "./codex"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

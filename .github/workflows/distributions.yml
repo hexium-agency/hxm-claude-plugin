@@ -1,0 +1,17 @@
+name: Distributions
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    name: Check generated distributions are up to date
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Verify commands, agents and Codex skills match the canonical sources
+        run: ./scripts/check-distributions.sh

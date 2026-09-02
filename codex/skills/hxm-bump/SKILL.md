@@ -1,8 +1,6 @@
 ---
-description: Smart version bump tool that analyzes commits and suggests appropriate version increment
-argument-hint: --major | --minor | --patch | --auto
-allowed-tools: [Read, Grep, Edit, AskUserQuestion, Bash(git log:*), Bash(git tag:*), Bash(git diff:*), Bash(git status:*), Bash(git add:*), Bash(git commit:*), Bash(npm version:*), Bash(cargo set-version:*), Bash(composer config:*), Bash(./scripts/generate-distributions.sh:*), Bash(./scripts/check-version-consistency.sh:*)]
-model: haiku
+name: hxm-bump
+description: Use when the user asks to bump, release or tag a new version of the current project. Analyses conventional commits since the last tag, proposes a major, minor or patch increment, updates the project manifest and creates the matching git tag once the user has confirmed.
 ---
 
 # Smart Version Bump
@@ -26,12 +24,6 @@ Smart version bump tool that analyzes git commit history since the last version 
 - No arguments: Same as `--auto`
 
 ## Process
-
-**CRITICAL: This command MUST NOT execute in plan mode. If you are in plan mode (indicated by system reminders or restrictions on tool usage), immediately output the following error message and stop execution:**
-
-"Error: This command cannot run in plan mode. Please exit plan mode first to execute version operations."
-
-**Only proceed with the following steps if you are NOT in plan mode:**
 
 1. **Pre-flight Checks**
 
@@ -113,7 +105,7 @@ Smart version bump tool that analyzes git commit history since the last version 
      Proposed message: "A.B.C - [generated message]"
      ```
    - If the tag for A.B.C already exists: Exit with error "Tag [tag] already exists"
-   - Use `AskUserQuestion` to confirm the bump (options: "Proceed" / "Cancel")
+   - Ask the user to confirm the bump in plain text (Proceed / Cancel) and wait for the answer
    - If the user does not confirm: Exit without changes
 
 8. **Version Bump Execution**
@@ -214,17 +206,17 @@ The tool follows these rules for analyzing conventional commits:
 
 ```bash
 # Auto-detect the bump level from conventional commits since the last tag
-/hxm:bump --auto
+$hxm-bump --auto
 
 # Force a specific level
-/hxm:bump --major
+$hxm-bump --major
 ```
 
-**Typical flow** (`/hxm:bump --auto`, Node.js project at v1.2.3): pre-flight checks pass → detect npm project
+**Typical flow** (`$hxm-bump --auto`, Node.js project at v1.2.3): pre-flight checks pass → detect npm project
 → analyze commits since v1.2.3 (two `feat:`, one `fix:`) → highest level MINOR → new version 1.3.0 → preview
 and confirm → `npm version minor -m "1.3.0 - add user profiles and email notifications"` → tag v1.3.0 created.
 
-**Claude Code plugin flow** (`/hxm:bump --auto`, plugin at 0.4.2, tags without a `v` prefix): detect
+**Claude Code plugin flow** (`$hxm-bump --auto`, plugin at 0.4.2, tags without a `v` prefix): detect
 `.claude-plugin/plugin.json` → current version 0.4.2 → latest tag `0.4.2` so the convention is unprefixed
 → analyze commits (one `fix:`) → PATCH → new version 0.4.3 → edit `plugin.json`, leave the marketplace
 entry untouched since it declares no version → commit → `git tag 0.4.3` → run
@@ -234,3 +226,20 @@ entry untouched since it declares no version → commit → `git tag 0.4.3` → 
 
 - Dirty working directory → `Error: Working directory not clean. Commit or stash changes first.`
 - No commits since the last tag → `Error: No commits since last version. Nothing to bump.`
+
+## Guardrails
+
+These rules override anything above them and are not negotiable:
+
+- **Never commit, push, or tag without an explicit confirmation from the user in the current
+  conversation.** Proposing a message is fine; running the command is not.
+- **Never force-push.** The only accepted form is `git push --force-with-lease`, and only inside the
+  rebase workflow, once the rebase is entirely clean.
+- **Stop when the parent branch is ambiguous.** Detect it via `git merge-base` and `git reflog` —
+  never hardcode `main` or `develop`, and ask the user rather than guessing.
+- **Never post to ClickUp or GitHub on the user's behalf.** Tickets, comments and reviews are
+  read-only: draft the reply as text and let the user post it.
+- **Never expand the scope.** Implement exactly what was asked; suggest related work instead of doing
+  it, and do not refactor or rename adjacent code.
+- **Never invent an external tool.** If a required MCP server or CLI is unavailable, say so and
+  continue with a degraded but honest result.

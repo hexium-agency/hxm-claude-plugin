@@ -1,8 +1,6 @@
 ---
-description: Smart git commit tool. Handles staging, generates conventional commit messages, executes git commits.
-argument-hint: --all | --files <file1> <file2> ...
-allowed-tools: [Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git commit:*)]
-model: haiku
+name: hxm-commit
+description: Use when the user asks to commit staged or pending changes. Stages only what the arguments allow, generates a conventional commit message and commits after explicit confirmation.
 ---
 
 # Smart Git Commit Tool
@@ -13,7 +11,7 @@ messages, and executes git commits through a strict validation workflow. Do not 
 ## Usage
 
 ```bash
-/hxm:commit [--all] [--files <file1> <file2> ...]
+$hxm-commit [--all] [--files <file1> <file2> ...]
 ```
 
 ## Arguments
@@ -23,11 +21,6 @@ messages, and executes git commits through a strict validation workflow. Do not 
 - `--files <file1> <file2> ...`: Stage only the specified files before analyzing
 
 ## Process
-
-**CRITICAL: This command MUST NOT execute in plan mode.** If you are in plan mode (indicated by system
-reminders or restrictions on tool usage), output the following and stop: "Error: This command cannot run in
-plan mode. Please exit plan mode first to execute git operations." Only proceed with the steps below if you
-are NOT in plan mode.
 
 ### 1. Parse and Validate Arguments
 
@@ -128,3 +121,20 @@ EOF
 - Always verify staged changes before committing
 - Respect existing pre-commit hooks
 - Use English for all commit messages
+
+## Guardrails
+
+These rules override anything above them and are not negotiable:
+
+- **Never commit, push, or tag without an explicit confirmation from the user in the current
+  conversation.** Proposing a message is fine; running the command is not.
+- **Never force-push.** The only accepted form is `git push --force-with-lease`, and only inside the
+  rebase workflow, once the rebase is entirely clean.
+- **Stop when the parent branch is ambiguous.** Detect it via `git merge-base` and `git reflog` —
+  never hardcode `main` or `develop`, and ask the user rather than guessing.
+- **Never post to ClickUp or GitHub on the user's behalf.** Tickets, comments and reviews are
+  read-only: draft the reply as text and let the user post it.
+- **Never expand the scope.** Implement exactly what was asked; suggest related work instead of doing
+  it, and do not refactor or rename adjacent code.
+- **Never invent an external tool.** If a required MCP server or CLI is unavailable, say so and
+  continue with a degraded but honest result.
