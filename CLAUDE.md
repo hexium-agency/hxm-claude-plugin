@@ -15,10 +15,11 @@ repository root, and a Codex plugin under `codex/`.
 |-----------|---------|--------|
 | `workflows/` | Business procedures, provider-neutral | `.md` with neutral frontmatter |
 | `experts/` | Domain expertises, provider-neutral | `.md` with neutral frontmatter |
-| `bindings/claude/` | Claude-only `model` and `allowed-tools` | `commands.json`, `agents.json` |
+| `bindings/claude/` | Claude-only `model`, `allowed-tools` and optional `disable-model-invocation` | `commands.json`, `agents.json` |
 | `bindings/codex/` | Codex-only manifest metadata (required `interface` block) | `plugin.json` |
 | `.agents/plugins/` | Codex marketplace catalog, points at `./codex` | `marketplace.json` |
 | `scripts/` | Generation and validation harness | shell |
+| `helpers/` | Runtime helpers called by Claude commands via `${CLAUDE_PLUGIN_ROOT}/helpers/` | any |
 
 ### Generated artifacts — never edit
 
