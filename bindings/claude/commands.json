@@ -94,6 +94,32 @@
     ],
     "model": "sonnet"
   },
+  "fix-ci": {
+    "allowed-tools": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Edit",
+      "AskUserQuestion",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run list:*)",
+      "Bash(git fetch:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git merge-base:*)",
+      "Bash(git reflog:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(sail:*)",
+      "Bash(docker ps:*)"
+    ],
+    "model": "sonnet"
+  },
   "fix-tests": {
     "allowed-tools": [
       "Read",
@@ -195,6 +221,25 @@
       "WebFetch"
     ],
     "model": "opus"
+  },
+  "staging": {
+    "allowed-tools": [
+      "Read",
+      "Edit",
+      "Glob",
+      "AskUserQuestion",
+      "Bash(git fetch:*)",
+      "Bash(git status:*)",
+      "Bash(git branch:*)",
+      "Bash(git switch:*)",
+      "Bash(git merge:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push origin HEAD:*)"
+    ],
+    "model": "sonnet"
   },
   "timesheet": {
     "allowed-tools": [

@@ -10,7 +10,7 @@ Everything here (`skills/`, `.codex-plugin/plugin.json`) is produced by
 
 | Path | Origin |
 |------|--------|
-| `skills/hxm-<workflow>/SKILL.md` | `workflows/<workflow>.md` — 17 business procedures |
+| `skills/hxm-<workflow>/SKILL.md` | `workflows/<workflow>.md` — 19 business procedures |
 | `skills/hxm-<expert>/SKILL.md` | `experts/<expert>.md` — 5 domain expertises |
 | `.codex-plugin/plugin.json` | Derived from `.claude-plugin/plugin.json` (same version, always) |
 
@@ -83,7 +83,7 @@ the skills that depend on them:
 | ClickUp MCP server | `hxm-plan-ticket`, `hxm-spec-ticket`, `hxm-estimate-ticket`, `hxm-wrap-up`, `hxm-handle-feedback`, `hxm-timesheet` |
 | Figma MCP server | `hxm-spec-ticket` |
 | Context7 MCP server | `hxm-context7-expert` |
-| GitHub CLI (`gh`), authenticated | `hxm-create-pr`, `hxm-handle-feedback` |
+| GitHub CLI (`gh`), authenticated | `hxm-create-pr`, `hxm-fix-ci`, `hxm-handle-feedback` |
 
 Every skill degrades gracefully: when a dependency is missing it reports the fact and continues
 without that part of the analysis.

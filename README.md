@@ -32,7 +32,7 @@ that distribution.
 ## Architecture: one source, two distributions
 
 ```
-workflows/            # 17 canonical business procedures — provider-neutral
+workflows/            # 19 canonical business procedures — provider-neutral
 experts/              #  5 canonical domain expertises  — provider-neutral
 bindings/claude/      # the only irreducible Claude-specific data (model, allowed-tools, disable-model-invocation)
 bindings/codex/       # Codex-only manifest metadata (the required `interface` block)
@@ -161,7 +161,7 @@ python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py ./code
 - `python3`, for `/hxm:timesheet` (session analysis helper)
 - A Figma MCP server, for `/hxm:spec-ticket`
 - A Context7 MCP server, for the `context7-expert` agent
-- The GitHub CLI (`gh`), authenticated, for `/hxm:create-pr` and `/hxm:handle-feedback`
+- The GitHub CLI (`gh`), authenticated, for `/hxm:create-pr`, `/hxm:fix-ci` and `/hxm:handle-feedback`
 
 No credentials or MCP configuration are shipped with this plugin.
 
