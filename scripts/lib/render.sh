@@ -87,7 +87,7 @@ render_requirements_section() { # <requires-value>
 
 # Renders one canonical workflow into its Claude slash command.
 render_claude_command() { # <workflow-file> <out-root> <bindings>
-  local file="$1" out_root="$2" bindings="$3" name description arguments model tools
+  local file="$1" out_root="$2" bindings="$3" name description arguments model tools manual_only
   name="$(render_fm_value "$file" name)"
   description="$(render_fm_value "$file" description)"
   arguments="$(render_fm_value "$file" arguments)"
@@ -97,6 +97,7 @@ render_claude_command() { # <workflow-file> <out-root> <bindings>
 
   model="$(jq -r --arg n "$name" '.[$n].model' "$bindings")"
   tools="$(jq -r --arg n "$name" '.[$n]["allowed-tools"] | join(", ")' "$bindings")"
+  manual_only="$(jq -r --arg n "$name" '.[$n]["disable-model-invocation"] // false' "$bindings")"
 
   mkdir -p "$out_root/commands"
   {
@@ -105,6 +106,7 @@ render_claude_command() { # <workflow-file> <out-root> <bindings>
     printf 'argument-hint: %s\n' "$arguments"
     printf 'allowed-tools: [%s]\n' "$tools"
     printf 'model: %s\n' "$model"
+    if [ "$manual_only" = "true" ]; then printf 'disable-model-invocation: true\n'; fi
     printf -- '---\n'
     render_body "$file" claude
   } > "$out_root/commands/$name.md"
