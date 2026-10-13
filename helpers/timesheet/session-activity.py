@@ -11,7 +11,7 @@ from pathlib import Path
 
 PROJECTS = Path.home() / ".claude" / "projects"
 PROJECT_PREFIX = re.sub(r"[^A-Za-z0-9]", "-", str(Path.home())) + "-"
-TICKET = re.compile(r"cu-([0-9a-z]{9})")
+TICKET = re.compile(r"cu-([0-9][0-9a-z]{8})")
 TICKET_URL = re.compile(r"app\.clickup\.com/t/(?:\d+/)?([0-9a-zA-Z-]+)")
 
 
