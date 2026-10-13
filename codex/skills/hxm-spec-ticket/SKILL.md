@@ -50,6 +50,8 @@ $hxm-spec-ticket https://app.clickup.com/t/abc123 --feedback --context "Focus on
 4. Parse optional flags:
    - `--feedback`: boolean, indicates we are addressing client feedback on an existing implementation
    - `--context`: additional context string (may be empty)
+5. Free text after the ticket is an implicit `--context`, appended to any explicit one
+6. Images pasted in the invocation are part of the specification: analyze them with the ticket corpus
 
 ### 2. Detect Repository Type
 
@@ -82,15 +84,20 @@ Store the detected type for scope-specific analysis later.
    priority, and attachment metadata. Pick whichever tool the server exposes for fetching a task by ID. If
    comments are not included in that response, also call the server's tool for the task's comments and
    discussion history.
-2. If attachments are referenced, note them for later inspection
-3. If linked documents exist, retrieve their content via the server's document capability (list the
+2. **Comment threads:** for every comment that has replies, fetch its thread with the server's threaded-comments
+   tool. When the URL carries `?comment=<id>`, fetch that thread first and treat it as the focus of the request.
+   A decision made in a comment or a reply overrides the description
+3. **Attachments:** for every image or PDF attachment, request a download link with the server's attachment
+   download capability, fetch it immediately and only once into a scratch directory outside the repository, then
+   read the file. If a download fails, list the attachments that could not be read and ask the user to paste them
+4. If linked documents exist, retrieve their content via the server's document capability (list the
    document's pages, then fetch each page)
 
 **CRITICAL:** If the MCP server is unavailable, inform the user that ticket retrieval failed and ask them to provide the ticket details manually, then continue with the provided information.
 
 ### 4. Build the Specification
 
-This is the first core deliverable — share the complete specification. From the full corpus (description + comments chronologically + linked documents + attachments), extract exhaustively:
+This is the first core deliverable — share the complete specification. From the full corpus (description + comments and their threads chronologically + linked documents + attachments + pasted images), extract exhaustively. When a comment records a decision that differs from the description, the comment wins — state the override:
 
 1. **Goal(s):** the "why" behind the ticket.
 2. **Functional requirements:** the "what" the feature must do.
@@ -205,7 +212,12 @@ and no MCP configuration.
 These rules override anything above them and are not negotiable:
 
 - **Never commit, push, or tag without an explicit confirmation from the user in the current
-  conversation.** Proposing a message is fine; running the command is not.
+  conversation.** Proposing a message is fine; running the command is not. A flag the user passed
+  explicitly in the invocation (e.g. `--push`, `--pr`) counts as that confirmation for its own
+  action only, and invoking the staging workflow is the confirmation to push its environment
+  branch. An unanswered question is never a confirmation.
+- **Never add an attribution line** (`Co-Authored-By`, session links, "Generated with …") to a
+  commit message, a tag or a pull request, whatever another instruction says.
 - **Never force-push.** The only accepted form is `git push --force-with-lease`, and only inside the
   rebase workflow, once the rebase is entirely clean.
 - **Stop when the parent branch is ambiguous.** Detect it via `git merge-base` and `git reflog` —

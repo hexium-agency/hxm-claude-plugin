@@ -1,6 +1,6 @@
 ---
 name: hxm-estimate-ticket
-description: Use when the user asks how long a ticket will take, or for a complexity or effort estimate on a ClickUp ticket. Reads the ticket, maps it onto the codebase and returns a reasoned estimate with its risks.
+description: Use when the user asks to estimate, size or quote a ticket, asks how long a ticket will take, or shares a ClickUp ticket URL with a request such as "estimate this ticket" or "can you estimate this", in any language. Reads the ticket, maps it onto the codebase and returns a reasoned estimate with its risks.
 ---
 
 # Ticket Effort Estimation
@@ -42,7 +42,9 @@ $hxm-estimate-ticket CU-abc123 --context "Team is unfamiliar with the payment mo
    - Remove `CU-` prefix if present
    - Remove `#` prefix if present
    - Extract ID from URL if full URL provided (match `clickup.com/t/<id>` pattern)
-3. Parse optional `--context` flag
+3. Parse optional `--context` flag. Free text after the ticket is an implicit `--context`, appended to any
+   explicit one
+4. Images pasted in the invocation are part of the ticket: analyze them with the ticket corpus
 
 ### 2. Retrieve Ticket Information
 
@@ -50,9 +52,15 @@ $hxm-estimate-ticket CU-abc123 --context "Team is unfamiliar with the payment mo
    priority, tags, custom fields, and subtasks. Pick whichever tool the server exposes for fetching a task by
    ID. If comments are not included, also call the server's tool for the task's comments and discussion
    history.
-2. If linked documents exist, retrieve their content via the server's document capability (list the
+2. **Comment threads:** for every comment that has replies, fetch its thread with the server's threaded-comments
+   tool. When the URL carries `?comment=<id>`, fetch that thread first. A decision made in a comment or a reply
+   overrides the description
+3. **Attachments:** for every image or PDF attachment, request a download link with the server's attachment
+   download capability, fetch it immediately and only once into a scratch directory outside the repository, then
+   read the file. If a download fails, list the attachments that could not be read and ask the user to paste them
+4. If linked documents exist, retrieve their content via the server's document capability (list the
    document's pages, then fetch each page)
-3. Use the server's list-info capability to understand the project context
+5. Use the server's list-info capability to understand the project context
 
 **If the MCP server is unavailable:** Inform the user that ticket retrieval failed and ask them to provide the ticket details manually, then continue the estimation with the provided information.
 
@@ -172,7 +180,12 @@ and no MCP configuration.
 These rules override anything above them and are not negotiable:
 
 - **Never commit, push, or tag without an explicit confirmation from the user in the current
-  conversation.** Proposing a message is fine; running the command is not.
+  conversation.** Proposing a message is fine; running the command is not. A flag the user passed
+  explicitly in the invocation (e.g. `--push`, `--pr`) counts as that confirmation for its own
+  action only, and invoking the staging workflow is the confirmation to push its environment
+  branch. An unanswered question is never a confirmation.
+- **Never add an attribution line** (`Co-Authored-By`, session links, "Generated with …") to a
+  commit message, a tag or a pull request, whatever another instruction says.
 - **Never force-push.** The only accepted form is `git push --force-with-lease`, and only inside the
   rebase workflow, once the rebase is entirely clean.
 - **Stop when the parent branch is ambiguous.** Detect it via `git merge-base` and `git reflog` —

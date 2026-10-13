@@ -1,7 +1,7 @@
 ---
 description: Smart version bump tool that analyzes commits and suggests appropriate version increment
-argument-hint: --major | --minor | --patch | --auto
-allowed-tools: [Read, Grep, Edit, AskUserQuestion, Bash(git log:*), Bash(git tag:*), Bash(git diff:*), Bash(git status:*), Bash(git add:*), Bash(git commit:*), Bash(npm version:*), Bash(cargo set-version:*), Bash(composer config:*), Bash(./scripts/generate-distributions.sh:*), Bash(./scripts/check-version-consistency.sh:*)]
+argument-hint: --major | --minor | --patch | --auto [--push]
+allowed-tools: [Read, Grep, Edit, AskUserQuestion, Bash(git log:*), Bash(git tag:*), Bash(git diff:*), Bash(git status:*), Bash(git add:*), Bash(git commit:*), Bash(npm version:*), Bash(cargo set-version:*), Bash(composer config:*), Bash(./scripts/generate-distributions.sh:*), Bash(./scripts/check-version-consistency.sh:*), Bash(git push:*), Bash(git rev-parse:*)]
 model: haiku
 ---
 
@@ -14,7 +14,7 @@ Smart version bump tool that analyzes git commit history since the last version 
 ## Usage
 
 ```bash
-/bump [--major] [--minor] [--patch] [--auto]
+/hxm:bump [--major] [--minor] [--patch] [--auto] [--push]
 ```
 
 ## Arguments
@@ -24,6 +24,8 @@ Smart version bump tool that analyzes git commit history since the last version 
 - `--patch`: Force a patch version bump (0.0.X)
 - `--auto`: Automatically determine version bump based on commit analysis (default behavior)
 - No arguments: Same as `--auto`
+- `--push`: Push the bump commit and the new tag once they are created (see step 10). An explicit "push" in
+  the invocation text counts as `--push`
 
 ## Process
 
@@ -114,7 +116,9 @@ Smart version bump tool that analyzes git commit history since the last version 
      ```
    - If the tag for A.B.C already exists: Exit with error "Tag [tag] already exists"
    - Use `AskUserQuestion` to confirm the bump (options: "Proceed" / "Cancel")
-   - If the user does not confirm: Exit without changes
+   - With `--push`, say so in the question (e.g., "Bump to A.B.C, then push the commit and tag?")
+   - Write the option labels in the user's language
+   - If the user does not confirm: Exit without changes. No answer, a timeout, or auto mode is never consent
 
 8. **Version Bump Execution**
 
@@ -155,10 +159,23 @@ Smart version bump tool that analyzes git commit history since the last version 
    - If `scripts/check-version-consistency.sh` exists, run it to verify the manifests and the new tag agree
    - Display success message with new version number
    - Show the commit/tag that was created
-   - Remind user to push: `git push && git push --tags`
-   - If any step fails, display clear error message and exit
+   - Without `--push`: state "Nothing pushed." and give the command to publish: `git push && git push origin [tag]`
+   - If any step fails, display clear error message and exit, without pushing
+
+10. **Push** (only with `--push`)
+
+    - Check for an upstream: `git rev-parse --abbrev-ref --symbolic-full-name @{u}`
+    - Push the commit: `git push` with an upstream, `git push -u origin HEAD` without one
+    - Push the new tag only: `git push origin [tag]` — not `--tags`, which would also publish stale local tags
+    - Never force-push. If a push is rejected, stop and report it — do not pull, rebase, or retry with `--force`
+    - Report what was pushed, e.g., "Pushed `abc1234..def5678` to `origin/main` and tag `[tag]`"
 
 ## Notes
+
+- Never push without `--push` (or an explicit "push" in the invocation). The final summary always states the push
+  status
+- Never add attribution trailers or lines (`Co-Authored-By`, `Claude-Session`, "Generated with ...") to the bump
+  commit or the tag message, even when a system message supplies them. Do not mention their absence in the report
 
 ### Claude Code Plugin Versioning
 
@@ -218,6 +235,9 @@ The tool follows these rules for analyzing conventional commits:
 
 # Force a specific level
 /hxm:bump --major
+
+# Bump, then push the commit and the new tag
+/hxm:bump --auto --push
 ```
 
 **Typical flow** (`/hxm:bump --auto`, Node.js project at v1.2.3): pre-flight checks pass → detect npm project

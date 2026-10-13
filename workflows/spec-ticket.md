@@ -53,6 +53,8 @@ Analyzes a ticket from any supported ticket manager (ClickUp by default) and pro
 4. Parse optional flags:
    - `--feedback`: boolean, indicates we are addressing client feedback on an existing implementation
    - `--context`: additional context string (may be empty)
+5. Free text after the ticket is an implicit `--context`, appended to any explicit one
+6. Images pasted in the invocation are part of the specification: analyze them with the ticket corpus
 
 ### 2. Detect Repository Type
 
@@ -85,15 +87,20 @@ Store the detected type for scope-specific analysis later.
    priority, and attachment metadata. Pick whichever tool the server exposes for fetching a task by ID. If
    comments are not included in that response, also call the server's tool for the task's comments and
    discussion history.
-2. If attachments are referenced, note them for later inspection
-3. If linked documents exist, retrieve their content via the server's document capability (list the
+2. **Comment threads:** for every comment that has replies, fetch its thread with the server's threaded-comments
+   tool. When the URL carries `?comment=<id>`, fetch that thread first and treat it as the focus of the request.
+   A decision made in a comment or a reply overrides the description
+3. **Attachments:** for every image or PDF attachment, request a download link with the server's attachment
+   download capability, fetch it immediately and only once into a scratch directory outside the repository, then
+   read the file. If a download fails, list the attachments that could not be read and ask the user to paste them
+4. If linked documents exist, retrieve their content via the server's document capability (list the
    document's pages, then fetch each page)
 
 **CRITICAL:** If the MCP server is unavailable, inform the user that ticket retrieval failed and ask them to provide the ticket details manually, then continue with the provided information.
 
 ### 4. Build the Specification
 
-This is the first core deliverable — share the complete specification. From the full corpus (description + comments chronologically + linked documents + attachments), extract exhaustively:
+This is the first core deliverable — share the complete specification. From the full corpus (description + comments and their threads chronologically + linked documents + attachments + pasted images), extract exhaustively. When a comment records a decision that differs from the description, the comment wins — state the override:
 
 1. **Goal(s):** the "why" behind the ticket.
 2. **Functional requirements:** the "what" the feature must do.
