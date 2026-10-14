@@ -13,6 +13,11 @@ validated time entries for the user to log in ClickUp and updates the weekly tim
 Process: **Configure → Ask → Collect → Draft → Propose → Refine → Write.** Nothing is logged or written
 before the user validates.
 
+**ClickUp scope.** The only ticket field this command may ever write is the tracked time ("Track Time"),
+through time entries. Every other field is read-only: never change a status, time estimate, assignee,
+date, priority, title, description, tag, custom field or comment, even when the user's hints or a status
+mismatch suggest it. Report such a mismatch in the anchors or Open points instead.
+
 ## Usage
 
 ```
@@ -193,6 +198,7 @@ Refine until the user explicitly validates. Each correction applies to the whole
 | Several short alternating blocks for parallel work | Group them into contiguous blocks |
 | Creating an entry that already exists in ClickUp | Existing entries are locked blocks |
 | Logging time before validation | Propose first, wait for the go |
+| Updating a status or an estimate to match the schedule | Only tracked time is written: report the mismatch instead |
 | Analyzing before the hours and break are known | Ask first (step 1) |
 
 ## Prerequisites
