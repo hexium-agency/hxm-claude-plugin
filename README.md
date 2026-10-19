@@ -32,10 +32,11 @@ that distribution.
 ## Architecture: one source, two distributions
 
 ```
-workflows/            # 16 canonical business procedures — provider-neutral
+workflows/            # 17 canonical business procedures — provider-neutral
 experts/              #  5 canonical domain expertises  — provider-neutral
-bindings/claude/      # the only irreducible Claude-specific data (model, allowed-tools)
+bindings/claude/      # the only irreducible Claude-specific data (model, allowed-tools, disable-model-invocation)
 bindings/codex/       # Codex-only manifest metadata (the required `interface` block)
+helpers/              # runtime helpers called by the Claude commands (shipped, not generated)
 scripts/              # generation and validation harness
 ├── lib/render.sh
 ├── generate-distributions.sh
@@ -156,7 +157,8 @@ python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py ./code
 - [Claude Code](https://code.claude.com) CLI
 - `jq` (generation and validation scripts)
 - A ClickUp MCP server, for the ticket commands: `/hxm:plan-ticket`, `/hxm:estimate-ticket`,
-  `/hxm:spec-ticket`, `/hxm:wrap-up`, `/hxm:handle-feedback`
+  `/hxm:spec-ticket`, `/hxm:wrap-up`, `/hxm:handle-feedback`, `/hxm:timesheet`
+- `python3`, for `/hxm:timesheet` (session analysis helper)
 - A Figma MCP server, for `/hxm:spec-ticket`
 - A Context7 MCP server, for the `context7-expert` agent
 - The GitHub CLI (`gh`), authenticated, for `/hxm:create-pr` and `/hxm:handle-feedback`

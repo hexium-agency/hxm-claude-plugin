@@ -196,6 +196,19 @@
     ],
     "model": "opus"
   },
+  "timesheet": {
+    "allowed-tools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "AskUserQuestion",
+      "Bash(python3 ${CLAUDE_PLUGIN_ROOT}/helpers/timesheet/session-activity.py:*)",
+      "mcp__clickup"
+    ],
+    "disable-model-invocation": true,
+    "model": "opus"
+  },
   "wrap-up": {
     "allowed-tools": [
       "Read",

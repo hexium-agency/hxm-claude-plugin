@@ -10,7 +10,7 @@ Everything here (`skills/`, `.codex-plugin/plugin.json`) is produced by
 
 | Path | Origin |
 |------|--------|
-| `skills/hxm-<workflow>/SKILL.md` | `workflows/<workflow>.md` — 16 business procedures |
+| `skills/hxm-<workflow>/SKILL.md` | `workflows/<workflow>.md` — 17 business procedures |
 | `skills/hxm-<expert>/SKILL.md` | `experts/<expert>.md` — 5 domain expertises |
 | `.codex-plugin/plugin.json` | Derived from `.claude-plugin/plugin.json` (same version, always) |
 
@@ -80,7 +80,7 @@ the skills that depend on them:
 
 | Dependency | Needed by |
 |------------|-----------|
-| ClickUp MCP server | `hxm-plan-ticket`, `hxm-spec-ticket`, `hxm-estimate-ticket`, `hxm-wrap-up`, `hxm-handle-feedback` |
+| ClickUp MCP server | `hxm-plan-ticket`, `hxm-spec-ticket`, `hxm-estimate-ticket`, `hxm-wrap-up`, `hxm-handle-feedback`, `hxm-timesheet` |
 | Figma MCP server | `hxm-spec-ticket` |
 | Context7 MCP server | `hxm-context7-expert` |
 | GitHub CLI (`gh`), authenticated | `hxm-create-pr`, `hxm-handle-feedback` |
@@ -109,7 +109,11 @@ These are deliberate, and follow from Codex not having the Claude Code primitive
    ask before continuing. The confirmation is still mandatory.
 6. **The five experts are plain skills.** In Claude they are autonomous subagents with their own tool
    allowlist; in Codex they are knowledge modules the main agent reads.
-7. **Namespacing is manual.** Claude scopes commands as `/hxm:commit` natively; Codex has one flat
+7. **`hxm-timesheet` is reduced.** It cannot read Codex session logs, so the draft relies on the
+   user's hints and the ClickUp anchors only. It lists the validated time entries for the user to create
+   instead of logging them, and its manual-only invocation is expressed in its description, not
+   enforced.
+8. **Namespacing is manual.** Claude scopes commands as `/hxm:commit` natively; Codex has one flat
    `$name` namespace, so the prefix is baked into the generated skill names instead.
 
 The manifest itself is not a limitation: `.codex-plugin/plugin.json` is generated from
