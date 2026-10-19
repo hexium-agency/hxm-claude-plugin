@@ -8,7 +8,7 @@ requires: clickup, figma
 
 # Ticket Specification and Gap Analysis
 
-Analyzes a ticket from any supported ticket manager (ClickUp by default) and produces a read-only report: the ticket's full specification plus an analysis of what is missing in the codebase to cover every case and goal. It does **not** produce an ordered implementation plan — the goal is to give you everything you need to build your own checklist and iterate in small increments. For a turnkey implementation plan, use `{{command:plan-ticket}}` instead.
+Analyzes a ticket from any supported ticket manager (ClickUp by default) and produces a read-only report: the full specification plus what is missing in the codebase to cover every case and goal. It does **not** produce an ordered implementation plan: the user builds their own checklist and iterates in small increments. For a turnkey plan, use `{{command:plan-ticket}}`.
 
 ## Usage
 
@@ -16,27 +16,14 @@ Analyzes a ticket from any supported ticket manager (ClickUp by default) and pro
 {{command:spec-ticket}} <ticket> [--feedback] [--context "additional context"]
 ```
 
-## Arguments
-
 | Argument | Type | Description |
 |----------|------|-------------|
-| `ticket` | string | **Required.** Ticket URL or ID (e.g., `abc123`, `CU-abc123`, or full ClickUp URL) |
-| `--feedback` | flag | Indicates the ticket has already been partially implemented and we are addressing client feedback |
-| `--context` | string | Additional context to consider during analysis |
-
-## Examples
+| `ticket` | string | **Required.** Ticket URL or ID (`abc123`, `CU-abc123`, full ClickUp URL) |
+| `--feedback` | flag | Ticket already partially implemented; addressing client feedback |
+| `--context` | string | Additional context to incorporate into the analysis |
 
 ```bash
-# Analyze a ClickUp ticket by ID
 {{command:spec-ticket}} abc123
-
-# Analyze a ticket that has client feedback to address
-{{command:spec-ticket}} abc123 --feedback
-
-# Analyze with additional context
-{{command:spec-ticket}} abc123 --context "This is related to the payment module refactoring"
-
-# Analyze from a full URL with feedback mode
 {{command:spec-ticket}} https://app.clickup.com/t/abc123 --feedback --context "Focus on the export flow"
 ```
 
@@ -44,84 +31,51 @@ Analyzes a ticket from any supported ticket manager (ClickUp by default) and pro
 
 ### 1. Parse Arguments
 
-1. Extract the ticket identifier from the first positional argument
-2. Clean the ticket ID:
-   - Remove `CU-` prefix if present
-   - Remove `#` prefix if present
-   - Extract ID from URL if full URL provided (match `clickup.com/t/<id>` pattern)
-3. Determine the ticket manager from the URL format (default to ClickUp if no specific format is detected)
-4. Parse optional flags:
-   - `--feedback`: boolean, indicates we are addressing client feedback on an existing implementation
-   - `--context`: additional context string (may be empty)
-5. Free text after the ticket is an implicit `--context`, appended to any explicit one
-6. Images pasted in the invocation are part of the specification: analyze them with the ticket corpus
+1. First positional argument is the ticket identifier; clean it: strip `CU-` and `#` prefixes, extract the ID from a URL (`clickup.com/t/<id>`).
+2. Ticket manager: from the URL format, ClickUp by default.
+3. Parse `--feedback` (boolean) and `--context` (string, may be empty). Free text after the ticket is an implicit `--context`, appended to any explicit one.
+4. Images pasted in the invocation are part of the specification: analyze them with the ticket corpus.
 
 ### 2. Detect Repository Type
 
-Automatically detect the repository type by examining the codebase:
+Store the detected type for later scope-specific analysis:
 
-**Backend indicators:**
-- `composer.json` with Laravel dependencies
-- `artisan` file present
-- `app/Http/Controllers` directory
-- `routes/api.php` or `routes/web.php`
-- Python: `requirements.txt`, `pyproject.toml`, Django/FastAPI patterns
-
-**Frontend indicators:**
-- `package.json` with React, Vue, Angular, or similar dependencies
-- `src/components` or `src/pages` directories
-- `vite.config.*`, `next.config.*`, `nuxt.config.*`
-- `tailwind.config.*`, `postcss.config.*`
-
-**Fullstack indicators:**
-- Both backend and frontend patterns present
-- Monorepo structure with separate packages
-
-Store the detected type for scope-specific analysis later.
+- **Backend:** `composer.json` with Laravel, `artisan`, `app/Http/Controllers`, `routes/api.php` or `routes/web.php`, Python (`requirements.txt`, `pyproject.toml`, Django/FastAPI patterns)
+- **Frontend:** `package.json` with React/Vue/Angular or similar, `src/components` or `src/pages`, `vite.config.*`, `next.config.*`, `nuxt.config.*`, `tailwind.config.*`, `postcss.config.*`
+- **Fullstack:** both present, or monorepo with separate packages
 
 ### 3. Retrieve Ticket Information
 
-**For ClickUp tickets:**
+For ClickUp, with the connected MCP server:
 
-1. Using the connected ClickUp MCP server, retrieve the full ticket by its ID — title, description, status,
-   priority, and attachment metadata. Pick whichever tool the server exposes for fetching a task by ID. If
-   comments are not included in that response, also call the server's tool for the task's comments and
-   discussion history.
-2. **Comment threads:** for every comment that has replies, fetch its thread with the server's threaded-comments
-   tool. When the URL carries `?comment=<id>`, fetch that thread first and treat it as the focus of the request.
-   A decision made in a comment or a reply overrides the description
-3. **Attachments:** for every image or PDF attachment, request a download link with the server's attachment
-   download capability, fetch it immediately and only once into a scratch directory outside the repository, then
-   read the file. If a download fails, list the attachments that could not be read and ask the user to paste them
-4. If linked documents exist, retrieve their content via the server's document capability (list the
-   document's pages, then fetch each page)
+1. Fetch the ticket by ID (title, description, status, priority, attachment metadata) with whichever task-fetch tool the server exposes. If comments are not included, also call its task-comments tool.
+2. **Comment threads:** fetch the thread of every comment that has replies with the threaded-comments tool. If the URL carries `?comment=<id>`, fetch that thread first and treat it as the focus of the request. A decision in a comment or reply overrides the description.
+3. **Attachments:** for every image or PDF, request a download link via the attachment download capability, fetch it immediately and only once into a scratch directory outside the repository, then read it. On failure, list the unreadable attachments and ask the user to paste them.
+4. **Linked documents:** retrieve via the document capability (list pages, then fetch each page).
 
-**CRITICAL:** If the MCP server is unavailable, inform the user that ticket retrieval failed and ask them to provide the ticket details manually, then continue with the provided information.
+**CRITICAL:** If the MCP server is unavailable, tell the user retrieval failed, ask for the ticket details manually, then continue with them.
 
 ### 4. Build the Specification
 
-This is the first core deliverable — share the complete specification. From the full corpus (description + comments and their threads chronologically + linked documents + attachments + pasted images), extract exhaustively. When a comment records a decision that differs from the description, the comment wins — state the override:
+First core deliverable: share the complete specification. Extract exhaustively from the full corpus (description + comments and threads chronologically + linked documents + attachments + pasted images). When a comment records a decision differing from the description, the comment wins: state the override.
 
-1. **Goal(s):** the "why" behind the ticket.
-2. **Functional requirements:** the "what" the feature must do.
-3. **All cases / scenarios to cover:** nominal path, edge cases, error states, permissions/roles, empty states, etc. This section must be the most thorough — it is the basis for the user's checklist.
-4. **Technical constraints:** explicit technologies, patterns, or limitations.
+1. **Goal(s):** the "why".
+2. **Functional requirements:** the "what".
+3. **All cases / scenarios:** nominal, edge, error states, permissions/roles, empty states, etc. The most thorough section: it is the basis of the user's checklist.
+4. **Technical constraints:** explicit technologies, patterns, limitations.
 5. **Acceptance criteria:** how to verify completion.
-6. **Client-specific work rules:** identify and surface every client-specific instruction or convention present in the ticket or its comments (e.g., naming, imposed wording/labels, date/currency format, process constraints, "never do X", validation/QA requirements, particular code conventions). Give these a dedicated section — they are easy to miss and critical for compliance.
-7. **Ambiguities / missing information:** list anything unclear in the ticket (do not ask interactive questions — this command is read-only).
+6. **Client-specific work rules:** every client-specific instruction or convention in the ticket or comments (naming, imposed wording/labels, date/currency format, process constraints, "never do X", validation/QA requirements, code conventions). Dedicated section: easy to miss, critical for compliance.
+7. **Ambiguities / missing information:** list anything unclear; no interactive questions (read-only).
 
-**If `--feedback` flag is set:**
-- Focus on the most recent comments containing client feedback
-- Distinguish what was already implemented from what needs changes
-- Separate bug fixes, requested modifications, and new requirements
+**`--feedback`:** focus on the most recent client-feedback comments; distinguish what is already implemented from what needs changes; separate bug fixes, requested modifications and new requirements.
 
 ### 5. Check Design / Figma References
 
-If the ticket (description, comments, linked documents, attachments) references a design or a Figma link:
+If the ticket (description, comments, linked documents, attachments) references a design or Figma link:
 
-1. Retrieve the design via the Figma MCP tools (`get_design_context`, `get_screenshot`, `get_metadata`) on the referenced URL or node.
-2. **Compare design against the ticket specification:** report inconsistencies — elements present in the design but absent from the ticket text and vice versa, states/screens not covered, diverging labels. These discrepancies feed both the "Ambiguities" and the cases to cover.
-3. If no design is referenced, skip this step (note it as "no design provided"). If the Figma MCP is unavailable, report it and continue without the design check.
+1. Retrieve it via the Figma MCP tools (`get_design_context`, `get_screenshot`, `get_metadata`) on the referenced URL or node.
+2. Compare design against specification and report inconsistencies: elements in the design but not the ticket text and vice versa, uncovered states/screens, diverging labels. They feed both "Ambiguities" and the cases to cover.
+3. No design referenced: skip and note "no design provided". Figma MCP unavailable: report it and continue without the design check.
 
 ### 6. Explore the Codebase
 
@@ -134,22 +88,17 @@ If the ticket (description, comments, linked documents, attachments) references 
    - Find existing patterns related to each requirement
    - Locate the files and modules that handle (or should handle) each case
    - Determine the current state of the code for the affected area
-2. Document findings relevant to the gap analysis with concrete file references (`path:line`).
+2. Document findings relevant to the gap analysis with concrete references (`path:line`).
 
-**If `--feedback` flag is set:**
-- Also identify the files that were modified in the initial implementation
-- Look for existing tests that may need updates
+**`--feedback`:** also identify files modified in the initial implementation and existing tests that may need updates.
 
 ### 7. Gap Analysis
 
-This is the second core deliverable — what is missing in the code. For each case/requirement from step 4, compare against the code state from step 6 and classify it as **covered** / **partially covered** / **missing**. Reference the affected files (`path:line`). This is what lets the user build their own checklist.
-
-**If `--feedback` flag is set:**
-- Orient the gap analysis toward the requested deltas rather than the whole feature
+Second core deliverable. Compare each case/requirement from step 4 against the code state from step 6 and classify it **covered** / **partially covered** / **missing**, with affected files (`path:line`). **`--feedback`:** orient the analysis toward the requested deltas rather than the whole feature.
 
 ### 8. Present Report
 
-Output the report directly (no plan file, no plan mode), as structured markdown:
+Output the report directly (no plan file, no plan mode) as structured markdown:
 
 ---
 
@@ -159,7 +108,7 @@ Output the report directly (no plan file, no plan mode), as structured markdown:
 
 #### Goal
 
-_1-3 sentences: the why behind the ticket._
+_1-3 sentences: the why._
 
 #### Specification
 
@@ -170,11 +119,11 @@ _1-3 sentences: the why behind the ticket._
 
 #### ⚠️ Client-Specific Work Rules
 
-_Surfaced list of every client-specific instruction or convention (naming, imposed wording, date/currency format, process, "never do X", QA…). State "No specific rules identified" otherwise._
+_Every client-specific instruction or convention. "No specific rules identified" otherwise._
 
 #### Design Consistency (Figma)
 
-_If a design is referenced: discrepancies design ↔ spec (design elements/states not described in the ticket and vice versa, diverging labels). Otherwise "No design provided"._
+_If a design is referenced: discrepancies design ↔ spec. Otherwise "No design provided"._
 
 #### Gap Analysis (code vs spec)
 
@@ -184,25 +133,15 @@ _If a design is referenced: discrepancies design ↔ spec (design elements/state
 
 #### Ambiguities to Resolve
 
-_Unclear points in the ticket plus any design inconsistencies found (no interactive question)._
+_Unclear ticket points plus design inconsistencies (no interactive question)._
 
 ---
 
-**If `--feedback` flag is set:** add a "Feedback Summary" section listing each feedback item and marking which are fixes vs enhancements.
-
-## Output
-
-The command produces a read-only report containing:
-1. A ticket summary showing retrieved information
-2. The full specification, including client-specific work rules
-3. A design consistency check when a Figma design is referenced
-4. A gap analysis mapping each case to its current code state
+**`--feedback`:** add a "Feedback Summary" section listing each feedback item, marking fixes vs enhancements.
 
 ## Notes
 
-- Read-only: does not modify any file, does not update the ticket, and performs no Git action.
-- Intentionally does **not** produce an ordered implementation plan or execution order — the user builds their own checklist from the gap analysis and iterates in small increments. See `{{command:plan-ticket}}` for a turnkey plan.
-- Surfaces client-specific work rules and verifies design ↔ spec consistency whenever a Figma design is referenced.
-- Falls back to manual ticket details if the ClickUp MCP is unavailable; if the Figma MCP is unavailable, it reports this and continues without the design check.
-- Additional context provided via `--context` is incorporated into the analysis.
-- The `--feedback` flag refocuses the analysis on client returns on existing work.
+- Read-only: modifies no file, does not update the ticket, performs no Git action.
+- No ordered implementation plan or execution order: the user builds their checklist from the gap analysis. See `{{command:plan-ticket}}` for a turnkey plan.
+- Falls back to manual ticket details if the ClickUp MCP is unavailable; if the Figma MCP is unavailable, reports it and continues without the design check.
+- `--context` is incorporated into the analysis; `--feedback` refocuses it on client returns on existing work.

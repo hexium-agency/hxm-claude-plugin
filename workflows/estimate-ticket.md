@@ -8,7 +8,7 @@ requires: clickup
 
 # Ticket Effort Estimation
 
-Analyzes a ClickUp ticket and provides a structured estimation of complexity, effort, risks, and dependencies.
+Analyzes a ClickUp ticket and provides a structured estimation of complexity, effort, risks and dependencies.
 
 ## Usage
 
@@ -16,23 +16,13 @@ Analyzes a ClickUp ticket and provides a structured estimation of complexity, ef
 {{command:estimate-ticket}} <ticket> [--context "additional context"]
 ```
 
-## Arguments
-
 | Argument | Type | Description |
 |----------|------|-------------|
-| `ticket` | string | **Required.** Ticket URL or ID (e.g., `abc123`, `CU-abc123`, or full ClickUp URL) |
-| `--context` | string | Additional context to consider during estimation (e.g., team familiarity, ongoing refactors) |
-
-## Examples
+| `ticket` | string | **Required.** Ticket URL or ID (`abc123`, `CU-abc123`, full ClickUp URL) |
+| `--context` | string | Additional context for the estimation (e.g., team familiarity, ongoing refactors) |
 
 ```bash
-# Estimate a ticket by ID
-{{command:estimate-ticket}} abc123
-
-# Estimate from a full URL
 {{command:estimate-ticket}} https://app.clickup.com/t/abc123
-
-# Estimate with additional context
 {{command:estimate-ticket}} CU-abc123 --context "Team is unfamiliar with the payment module"
 ```
 
@@ -40,75 +30,51 @@ Analyzes a ClickUp ticket and provides a structured estimation of complexity, ef
 
 ### 1. Parse Arguments
 
-1. Extract the ticket identifier from the first positional argument
-2. Clean the ticket ID:
-   - Remove `CU-` prefix if present
-   - Remove `#` prefix if present
-   - Extract ID from URL if full URL provided (match `clickup.com/t/<id>` pattern)
-3. Parse optional `--context` flag. Free text after the ticket is an implicit `--context`, appended to any
-   explicit one
-4. Images pasted in the invocation are part of the ticket: analyze them with the ticket corpus
+1. First positional argument is the ticket identifier; clean it: strip `CU-` and `#` prefixes, extract the ID from a URL (`clickup.com/t/<id>`).
+2. Parse `--context`. Free text after the ticket is an implicit `--context`, appended to any explicit one.
+3. Images pasted in the invocation are part of the ticket: analyze them with the ticket corpus.
 
 ### 2. Retrieve Ticket Information
 
-1. Using the connected ClickUp MCP server, retrieve the ticket by its ID — title, description, status,
-   priority, tags, custom fields, and subtasks. Pick whichever tool the server exposes for fetching a task by
-   ID. If comments are not included, also call the server's tool for the task's comments and discussion
-   history.
-2. **Comment threads:** for every comment that has replies, fetch its thread with the server's threaded-comments
-   tool. When the URL carries `?comment=<id>`, fetch that thread first. A decision made in a comment or a reply
-   overrides the description
-3. **Attachments:** for every image or PDF attachment, request a download link with the server's attachment
-   download capability, fetch it immediately and only once into a scratch directory outside the repository, then
-   read the file. If a download fails, list the attachments that could not be read and ask the user to paste them
-4. If linked documents exist, retrieve their content via the server's document capability (list the
-   document's pages, then fetch each page)
-5. Use the server's list-info capability to understand the project context
+With the connected ClickUp MCP server:
 
-**If the MCP server is unavailable:** Inform the user that ticket retrieval failed and ask them to provide the ticket details manually, then continue the estimation with the provided information.
+1. Fetch the ticket by ID (title, description, status, priority, tags, custom fields, subtasks) with whichever task-fetch tool the server exposes. If comments are not included, also call its task-comments tool.
+2. **Comment threads:** fetch the thread of every comment that has replies with the threaded-comments tool. If the URL carries `?comment=<id>`, fetch that thread first. A decision in a comment or reply overrides the description.
+3. **Attachments:** for every image or PDF, request a download link via the attachment download capability, fetch it immediately and only once into a scratch directory outside the repository, then read it. On failure, list the unreadable attachments and ask the user to paste them.
+4. **Linked documents:** retrieve via the document capability (list pages, then fetch each page).
+5. Use the list-info capability to understand the project context.
+
+**If the MCP server is unavailable:** tell the user retrieval failed, ask for the ticket details manually, then continue the estimation with them.
 
 ### 3. Gather Related Context
 
-1. Use the server's search capability to find similar completed tasks in the same list or project. Look for tasks with similar tags or keywords from the title. Limit to 5-10 results.
-2. Note any comparable past tasks and their apparent scope (based on description length, subtask count, and comments volume) to calibrate the estimate.
+1. Use the search capability to find similar completed tasks in the same list or project (similar tags or title keywords). Limit to 5-10 results.
+2. Note comparable past tasks and their apparent scope (description length, subtask count, comments volume) to calibrate the estimate.
 
 ### 4. Lightweight Codebase Assessment
 
 **Only if a codebase is available in the current working directory:**
 
-1. Detect repository type by checking for key files:
+1. Detect repository type:
    - Backend: `composer.json`, `artisan`, `requirements.txt`, `pyproject.toml`, `go.mod`
    - Frontend: `package.json`, `src/components/`, `vite.config.*`, `next.config.*`
-   - Fullstack: Both indicators present
-2. If the ticket description mentions specific areas (modules, files, features), use `Glob` and `Grep` to check:
-   - Whether those areas exist in the codebase
-   - How many files are in the affected area
-   - Whether there are existing patterns to follow or if new patterns need to be established
-3. Check if a branch already exists for this ticket:
-   ```bash
-   git branch -a --list "*CU-<ticketId>*"
-   ```
+   - Fullstack: both
+2. If the ticket mentions specific areas (modules, files, features), use `Glob` and `Grep` to check whether they exist, how many files the affected area holds, and whether patterns exist to follow or new ones must be established.
+3. Check for an existing branch for this ticket: `git branch -a --list "*CU-<ticketId>*"`
 
 ### 5. Analyze and Estimate
 
-Consider all gathered information and evaluate:
-
 **Complexity factors:**
-- Scope breadth: How many areas of the codebase are affected?
-- Technical depth: Does it require new patterns, integrations, or architectural changes?
-- Requirements clarity: Are requirements well-defined or ambiguous?
-- Dependencies: Does it depend on external systems, APIs, or other tickets?
-- Testing effort: How much testing is needed (unit, integration, E2E)?
-- Risk level: What could go wrong? Are there unknowns?
+- Scope breadth: how many codebase areas are affected?
+- Technical depth: new patterns, integrations or architectural changes?
+- Requirements clarity: well-defined or ambiguous?
+- Dependencies: external systems, APIs or other tickets?
+- Testing effort: unit, integration, E2E?
+- Risk level: what could go wrong, what are the unknowns?
 
-**Calibration:**
-- If similar past tasks were found, use them as reference points
-- If codebase patterns exist, factor in whether this follows or diverges from them
-- If `--context` was provided, incorporate it into the assessment
+**Calibration:** use similar past tasks as reference points; factor in whether the work follows or diverges from codebase patterns; incorporate `--context`.
 
 ### 6. Present Estimation
-
-Structure the output as follows:
 
 ---
 
@@ -118,7 +84,7 @@ Structure the output as follows:
 
 #### Summary
 
-_2-3 sentence summary of what the ticket requires, written from a technical perspective._
+_2-3 sentences on what the ticket requires, from a technical perspective._
 
 #### Complexity: **Simple** | **Medium** | **Complex** | **Very Complex**
 
@@ -141,15 +107,15 @@ _Brief justification for the range._
 
 #### Key Risks and Uncertainties
 
-_Bulleted list of factors that could affect the estimate. Each item should describe the risk and its potential impact on time. If none, state "No significant risks identified."_
+_Bulleted; each item states the risk and its potential time impact. "No significant risks identified." if none._
 
 #### Dependencies and Blockers
 
-_Bulleted list of external dependencies, other tickets, or preconditions. If none, state "No dependencies identified."_
+_Bulleted external dependencies, other tickets, preconditions. "No dependencies identified." if none._
 
 #### Recommendations
 
-_Optional. 1-3 actionable suggestions that could reduce risk or effort (e.g., "Clarify the expected behavior for edge case X before starting", "Consider splitting into two tickets")._
+_Optional. 1-3 actionable suggestions to reduce risk or effort (e.g., "Clarify the expected behavior for edge case X before starting", "Consider splitting into two tickets")._
 
 ---
 
@@ -162,11 +128,10 @@ _Optional. 1-3 actionable suggestions that could reduce risk or effort (e.g., "C
 | **Complex** | Multiple areas, some ambiguity, new patterns or integrations, significant testing | 12h - 30h |
 | **Very Complex** | Cross-cutting concerns, architectural changes, high ambiguity, extensive testing | 30h+ |
 
-These ranges are guidelines. Adjust based on codebase size, team context, and the `--context` flag.
+Ranges are guidelines: adjust for codebase size, team context and `--context`.
 
 ## Notes
 
-- This command is read-only. It does not modify any files or update the ticket.
-- Estimates are rough assessments based on available information, not commitments.
-- For a full implementation plan, use `{{command:plan-ticket}}` instead.
-- Additional context provided via `--context` is factored into the analysis.
+- Read-only: modifies no file, does not update the ticket.
+- Estimates are rough assessments from available information, not commitments.
+- For a full implementation plan, use `{{command:plan-ticket}}`.
